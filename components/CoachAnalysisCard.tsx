@@ -16,7 +16,7 @@ export function CoachAnalysisCard({ analysis }: { analysis: AnalysisResult }) {
           <Metric label="Accuracy" value={`${analysis.accuracy}%`} />
           <Metric label="Blunders" value={analysis.blunders.toString()} />
         </div>
-        <Insight icon={<Brain className="h-5 w-5" />} title="Biggest mistake" body={analysis.biggestMistake} />
+        <Insight icon={<Brain className="h-5 w-5" />} title="Biggest mistake" body={analysis.biggestMistake} tone="danger" />
         <Insight icon={<TrendingUp className="h-5 w-5" />} title={`Better move: ${analysis.betterMove}`} body={analysis.whyItWorks} />
         <Insight icon={<Target className="h-5 w-5" />} title="Training drill" body={analysis.drill} />
         <div className="rounded-[1.25rem] border border-white/10 bg-white/[0.04] p-4">
@@ -40,9 +40,9 @@ function Metric({ label, value }: { label: string; value: string }) {
   );
 }
 
-function Insight({ icon, title, body }: { icon: React.ReactNode; title: string; body: string }) {
+function Insight({ icon, title, body, tone = "default" }: { icon: React.ReactNode; title: string; body: string; tone?: "default" | "danger" }) {
   return (
-    <div className="rounded-[1.25rem] border border-white/10 bg-white/[0.04] p-4">
+    <div className={`rounded-[1.25rem] border p-4 ${tone === "danger" ? "border-[var(--coral)]/30 bg-[rgba(255,127,127,0.08)]" : "border-white/10 bg-white/[0.04]"}`}>
       <p className="flex items-center gap-2 font-semibold text-white">{icon}{title}</p>
       <p className="mt-2 text-sm leading-6 text-slate-300">{body}</p>
     </div>

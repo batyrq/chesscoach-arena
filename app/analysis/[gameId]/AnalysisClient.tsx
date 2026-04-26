@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { startTransition, useEffect, useMemo, useState } from "react";
 import { Chess } from "chess.js";
 import { ArrowLeft, Medal } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
@@ -16,7 +16,12 @@ import type { Move } from "@/lib/types";
 const demoPgn = "1. e4 e5 2. Nf3 Nc6 3. Bc4 Bc5 4. c3 Nf6 5. d4 exd4 6. e5 d5 7. exf6 dxc4 8. fxg7 Rg8";
 
 export function AnalysisClient({ gameId }: { gameId: string }) {
-  const [review] = useState<{ pgn: string; fen: string; moves: Move[] } | null>(() => loadGameReview(gameId) ?? createDemoReview());
+  const [review, setReview] = useState<{ pgn: string; fen: string; moves: Move[] } | null>(null);
+
+  useEffect(() => {
+    const storedReview = loadGameReview(gameId);
+    startTransition(() => setReview(storedReview ?? createDemoReview()));
+  }, [gameId]);
 
   const analysis = useMemo(() => {
     if (!review) return null;

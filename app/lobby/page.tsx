@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { startTransition, Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Bot, Link2, MonitorPlay } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
@@ -14,11 +14,30 @@ import { loadProfile, saveProfile } from "@/lib/storage";
 import { shortRoomCode } from "@/lib/utils";
 
 export default function LobbyPage() {
+  return (
+    <Suspense fallback={<LobbyFallback />}>
+      <LobbyContent />
+    </Suspense>
+  );
+}
+
+function LobbyContent() {
   const router = useRouter();
-  const [name, setName] = useState(() => loadProfile()?.name ?? "Guest Gambiteer");
-  const [city, setCity] = useState<City>(() => loadProfile()?.city ?? "Almaty");
+  const searchParams = useSearchParams();
+  const [name, setName] = useState("Guest Gambiteer");
+  const [city, setCity] = useState<City>("Almaty");
   const [joinCode, setJoinCode] = useState("");
-  const [friendMode] = useState(() => typeof window !== "undefined" && new URLSearchParams(window.location.search).get("mode") === "friend");
+  const friendMode = searchParams.get("mode") === "friend";
+
+  useEffect(() => {
+    const profile = loadProfile();
+    if (!profile) return;
+
+    startTransition(() => {
+      setName(profile.name);
+      setCity(profile.city);
+    });
+  }, []);
 
   function persist() {
     saveProfile({ name, city });
@@ -84,6 +103,16 @@ export default function LobbyPage() {
             </div>
           </div>
         </Card>
+      </main>
+    </AppShell>
+  );
+}
+
+function LobbyFallback() {
+  return (
+    <AppShell>
+      <main className="mx-auto grid min-h-[calc(100vh-96px)] w-full max-w-6xl items-center px-5 pb-16 md:px-8">
+        <div className="glass h-96 animate-pulse rounded-[2rem]" />
       </main>
     </AppShell>
   );

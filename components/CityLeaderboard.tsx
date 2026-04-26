@@ -33,7 +33,7 @@ export function CityLeaderboard() {
                 {player.name}
                 {player.isPro ? <Crown className="h-4 w-4 text-[var(--gold)]" /> : null}
               </p>
-              <p className="mt-1 text-xs text-slate-400">{player.city} · {player.wins} wins · {player.reviews} reviews</p>
+              <p className="mt-1 text-xs text-slate-400">{player.city} · {player.wins}/{player.games} · coach {player.coachScore}</p>
             </div>
             <div className="text-right">
               <p className="font-[var(--font-display)] text-xl font-bold">{player.rating}</p>

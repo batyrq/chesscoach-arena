@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Database, Globe2 } from "lucide-react";
+import { ArrowRight, Crown, Database, Globe2, Sparkles } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { CityLeaderboard } from "@/components/CityLeaderboard";
 import { ProUpgradeModal } from "@/components/ProUpgradeModal";
@@ -41,13 +41,28 @@ export default function LeaderboardPage() {
               <Globe2 className="h-5 w-5 text-[var(--mint)]" />
               <h2 className="font-[var(--font-display)] text-2xl font-bold">Global top players</h2>
             </div>
+            <div className="mb-5 grid gap-3 md:grid-cols-3">
+              {global.slice(0, 3).map((player, index) => (
+                <div key={player.id} className="relative overflow-hidden rounded-[1.35rem] border border-[var(--gold)]/20 bg-[linear-gradient(145deg,rgba(248,200,106,0.18),rgba(255,255,255,0.04))] p-4">
+                  <p className="text-xs uppercase tracking-[0.2em] text-[var(--gold)]">Podium #{index + 1}</p>
+                  <p className="mt-3 flex items-center gap-2 font-[var(--font-display)] text-lg font-bold">
+                    {player.name}
+                    {player.isPro ? <Crown className="h-4 w-4 text-[var(--gold)]" /> : null}
+                  </p>
+                  <p className="mt-1 text-xs text-slate-400">{player.city} · {player.rating}</p>
+                  <p className="mt-4 flex items-center gap-1 text-xs text-[var(--mint)]">
+                    <Sparkles className="h-3.5 w-3.5" /> Coach score {player.coachScore}
+                  </p>
+                </div>
+              ))}
+            </div>
             <div className="space-y-3">
               {global.map((player, index) => (
                 <div key={player.id} className="grid grid-cols-[2.5rem_1fr_auto] items-center gap-3 rounded-[1.25rem] bg-white/[0.05] p-4">
                   <div className="font-[var(--font-display)] text-xl font-bold text-[var(--gold)]">#{index + 1}</div>
                   <div>
                     <p className="font-semibold">{player.name}</p>
-                    <p className="text-xs text-slate-400">{player.city} · {player.wins} wins</p>
+                    <p className="text-xs text-slate-400">{player.city} · {player.wins}/{player.games} · {player.reviews} reviews · coach {player.coachScore}</p>
                   </div>
                   <p className="font-[var(--font-display)] text-xl font-bold">{player.rating}</p>
                 </div>

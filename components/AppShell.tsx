@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Crown, Swords } from "lucide-react";
+import { Swords } from "lucide-react";
 import { ProUpgradeModal } from "@/components/ProUpgradeModal";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -22,7 +22,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <ProUpgradeModal triggerLabel="Pro" />
         </nav>
         <div className="md:hidden">
-          <Crown className="h-5 w-5 text-[var(--gold)]" />
+          <ProUpgradeModal triggerLabel="Pro" />
         </div>
       </header>
       {children}

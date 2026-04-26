@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Crown, Sparkles, Wand2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,6 +13,8 @@ import {
 } from "@/components/ui/dialog";
 
 export function ProUpgradeModal({ triggerLabel = "Upgrade to Pro" }: { triggerLabel?: string }) {
+  const [checkoutReady, setCheckoutReady] = useState(false);
+
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -52,8 +55,13 @@ export function ProUpgradeModal({ triggerLabel = "Upgrade to Pro" }: { triggerLa
             </ul>
           </div>
         </div>
-        <Button className="mt-6 w-full" size="lg">
-          Open checkout stub
+        {checkoutReady ? (
+          <div className="mt-6 rounded-[1.25rem] border border-[var(--mint)]/30 bg-[rgba(118,247,203,0.1)] p-4 text-sm text-slate-200">
+            Checkout stub ready. In production this button would hand off to Stripe Checkout with the selected Pro plan.
+          </div>
+        ) : null}
+        <Button className="mt-6 w-full" size="lg" onClick={() => setCheckoutReady(true)}>
+          Preview checkout handoff
         </Button>
       </DialogContent>
     </Dialog>

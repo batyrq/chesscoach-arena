@@ -17,6 +17,7 @@ export type Move = {
   fenAfter: string;
   moveNumber: number;
   flags?: string;
+  captured?: string;
 };
 
 export type Game = {
@@ -48,6 +49,8 @@ export type AnalysisResult = {
 
 export type LeaderboardPlayer = Player & {
   wins: number;
+  games: number;
   reviews: number;
   streak: number;
+  coachScore: number;
 };

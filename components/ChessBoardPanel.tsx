@@ -1,6 +1,14 @@
 "use client";
 
-import { Chessboard } from "react-chessboard";
+import dynamic from "next/dynamic";
+
+const Chessboard = dynamic(
+  () => import("react-chessboard").then((module) => module.Chessboard),
+  {
+    ssr: false,
+    loading: () => <div className="aspect-square w-full animate-pulse rounded-[1.35rem] bg-white/[0.06]" />
+  }
+);
 
 type ChessBoardPanelProps = {
   fen: string;

@@ -24,20 +24,20 @@ export function analyzeGameFromMoves(moves: Move[], finalFen: string): AnalysisR
     accuracy: Math.round(accuracy),
     blunders,
     biggestMistake: biggestMistakeMove
-      ? `${biggestMistakeMove.san} gave your opponent forcing chances around move ${biggestMistakeMove.moveNumber}.`
-      : "You kept the position stable, but missed moments to improve your worst piece.",
+      ? `${biggestMistakeMove.san} was ambitious, but it asked your position to cash a check your development had not written yet. Around move ${biggestMistakeMove.moveNumber}, your opponent started getting tempo against your king and loose pieces.`
+      : "You kept the position stable. The main missed opportunity was quieter: improve your worst piece before starting the next pawn break.",
     betterMove: suggestBetterMove(biggestMistakeMove),
-    whyItWorks: "The recommended plan improves coordination before launching tactics, so your threats arrive with defenders already overloaded.",
+    whyItWorks: "The better plan makes your next threat harder to meet because your rooks, king safety, and minor pieces are all helping the same idea instead of playing separate games.",
     phaseAdvice: {
       opening: "Fight for the center first, then decide which pawn break your pieces actually support.",
       middlegame: "Before every capture, ask what defender disappears and whether your king becomes easier to target.",
       endgame: lateMove ? `After ${lateMove.san}, trade only if your king reaches the key squares first.` : "Activate the king early and do not rush pawn moves without a target square."
     },
-    drill: "Play 10 puzzle positions where you must find a quiet improving move before calculating checks.",
+    drill: "Replay the critical position three times: once looking only for checks, once only for captures, and once only for quiet improving moves. The third pass is where your rating jump is hiding.",
     tips: [
-      "Name your opponent's threat before choosing your move.",
-      "When ahead, trade attackers instead of random pieces.",
-      "Review every capture and check from the game before moving to the next one."
+      "Before you grab material, ask: which piece becomes undefended after the capture?",
+      "When you are ahead, trade your opponent's active pieces first, not just any piece.",
+      "After every game, review the first moment you moved the same piece twice in the opening."
     ]
   };
 }
@@ -54,14 +54,14 @@ function suggestBetterMove(move?: Move) {
   }
 
   if (move.san.includes("Q")) {
-    return "Develop a rook or minor piece first instead of moving the queen again.";
+    return "Bring a rook or minor piece into the attack before moving the queen again.";
   }
 
   if (move.san.includes("x")) {
-    return "Add pressure with a developing move before committing to the capture.";
+    return "Castle or improve your last undeveloped piece before committing to the capture.";
   }
 
-  return "Improve your least active piece and keep tension one move longer.";
+  return "Improve your least active piece and keep the tension one move longer.";
 }
 
 function evaluateMaterial(fen: string) {

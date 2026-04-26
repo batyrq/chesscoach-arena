@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { startTransition, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Chess, type Move as ChessMove } from "chess.js";
-import { Flag, Handshake, RotateCcw, Search } from "lucide-react";
+import { Activity, Flag, Handshake, RotateCcw, Search } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { ChessBoardPanel } from "@/components/ChessBoardPanel";
 import { GameStatusBanner } from "@/components/GameStatusBanner";
@@ -21,7 +21,14 @@ export function GameClient({ roomId }: { roomId: string }) {
   const [whiteClock, setWhiteClock] = useState(300);
   const [blackClock, setBlackClock] = useState(300);
   const [ended, setEnded] = useState(false);
-  const [profile] = useState<{ name: string; city: City }>(() => loadProfile() ?? { name: "Guest Gambiteer", city: "Almaty" });
+  const [profile, setProfile] = useState<{ name: string; city: City }>({ name: "Guest Gambiteer", city: "Almaty" });
+
+  useEffect(() => {
+    const storedProfile = loadProfile();
+    if (!storedProfile) return;
+
+    startTransition(() => setProfile(storedProfile));
+  }, []);
 
   useEffect(() => {
     if (ended || game.isGameOver()) return;
@@ -64,7 +71,8 @@ export function GameClient({ roomId }: { roomId: string }) {
         color: move.color,
         fenAfter: next.fen(),
         moveNumber: Math.ceil(next.history().length / 2),
-        flags: move.flags
+        flags: move.flags,
+        captured: move.captured
       }
     ]);
     return true;
@@ -99,7 +107,7 @@ export function GameClient({ roomId }: { roomId: string }) {
             <div className="flex flex-wrap gap-3">
               <ShareRoomButton roomId={roomId} />
               <Button onClick={saveAndReview}>
-                <Search className="h-4 w-4" /> Review Game
+                <Search className="h-4 w-4" /> Analyze Game
               </Button>
             </div>
           </div>
@@ -114,6 +122,7 @@ export function GameClient({ roomId }: { roomId: string }) {
               <span className="rounded-full bg-white/10 px-3 py-1 text-xs text-slate-300">{moves.length} plies</span>
             </div>
             <MoveHistory moves={moves} />
+            <GameStats moves={moves} />
             <div className="mt-4 grid grid-cols-3 gap-2">
               <Button variant="secondary" size="sm" onClick={() => setEnded(true)}>
                 <Flag className="h-3.5 w-3.5" /> Resign
@@ -133,6 +142,35 @@ export function GameClient({ roomId }: { roomId: string }) {
         </aside>
       </main>
     </AppShell>
+  );
+}
+
+function GameStats({ moves }: { moves: Move[] }) {
+  const captures = moves.filter((move) => move.captured);
+  const checks = moves.filter((move) => move.san.includes("+") || move.san.includes("#"));
+  const whiteCaptures = captures.filter((move) => move.color === "w").length;
+  const blackCaptures = captures.filter((move) => move.color === "b").length;
+
+  return (
+    <div className="mt-4 rounded-[1.25rem] border border-white/10 bg-white/[0.04] p-4">
+      <p className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-200">
+        <Activity className="h-4 w-4 text-[var(--mint)]" /> Match pulse
+      </p>
+      <div className="grid grid-cols-3 gap-2 text-center">
+        <Stat label="Captures" value={`${whiteCaptures}-${blackCaptures}`} />
+        <Stat label="Checks" value={checks.length.toString()} />
+        <Stat label="Phase" value={moves.length < 10 ? "Open" : moves.length < 32 ? "Mid" : "End"} />
+      </div>
+    </div>
+  );
+}
+
+function Stat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-2xl bg-slate-950/45 p-3">
+      <p className="font-[var(--font-display)] text-lg font-bold">{value}</p>
+      <p className="mt-1 text-[0.68rem] uppercase tracking-[0.16em] text-slate-500">{label}</p>
+    </div>
   );
 }
 

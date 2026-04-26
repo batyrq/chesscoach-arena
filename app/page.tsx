@@ -1,9 +1,10 @@
 import Link from "next/link";
-import { ArrowRight, Brain, Brush, Link2, Map } from "lucide-react";
+import { ArrowRight, Brain, Brush, Link2, Map, MoveUpRight, Trophy } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ProUpgradeModal } from "@/components/ProUpgradeModal";
+import { leaderboardPlayers } from "@/lib/demo-data";
 
 const features = [
   { title: "AI Coach", icon: Brain, body: "A post-game review that turns one messy game into clear training priorities." },
@@ -13,6 +14,13 @@ const features = [
 ];
 
 export default function LandingPage() {
+  const topCities = [
+    { city: "Almaty", score: 94, players: 128 },
+    { city: "Astana", score: 89, players: 101 },
+    { city: "Shymkent", score: 84, players: 74 },
+    { city: "Karaganda", score: 81, players: 62 }
+  ];
+
   return (
     <AppShell>
       <main className="mx-auto w-full max-w-7xl px-5 pb-16 pt-8 md:px-8">
@@ -35,8 +43,8 @@ export default function LandingPage() {
                 Play with Friend
               </Button>
             </div>
-            <div className="mt-10 grid gap-3 sm:grid-cols-3">
-              {["Live room links", "Coach review", "Vercel-ready"].map((item) => (
+            <div className="mt-10 grid gap-3 sm:grid-cols-4">
+              {["Friend rooms", "AI review", "City leaderboard", "Pro path"].map((item) => (
                 <div key={item} className="rounded-2xl border border-white/10 bg-white/[0.05] p-4 text-sm text-slate-300">
                   <span className="text-[var(--mint)]">●</span> {item}
                 </div>
@@ -59,6 +67,40 @@ export default function LandingPage() {
             );
           })}
         </section>
+        <section className="mt-16 grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+          <Card className="overflow-hidden p-6 md:p-8">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-sm font-semibold uppercase tracking-[0.3em] text-[var(--mint)]">Coach preview</p>
+                <h2 className="mt-3 font-[var(--font-display)] text-3xl font-bold">One game becomes tomorrow&apos;s training plan.</h2>
+              </div>
+              <div className="hidden rounded-full bg-[var(--mint)] px-4 py-2 text-sm font-bold text-slate-950 sm:block">
+                81% accuracy
+              </div>
+            </div>
+            <div className="mt-6 grid gap-4 md:grid-cols-3">
+              <CoachPreview title="Biggest mistake" body="You grabbed on g7 before your pieces were ready, giving Black a rook lift and tempo." />
+              <CoachPreview title="Better move" body="Castle first, then decide whether the pawn push is still forcing after the king is safe." />
+              <CoachPreview title="Training drill" body="Solve 10 positions where the best move is a quiet defender before a tactical shot." />
+            </div>
+          </Card>
+          <Card className="p-6 md:p-8">
+            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-[var(--gold)]">City heat</p>
+            <h2 className="mt-3 font-[var(--font-display)] text-3xl font-bold">Leaderboard teaser</h2>
+            <div className="mt-6 space-y-3">
+              {topCities.map((item, index) => (
+                <Link key={item.city} href="/leaderboard" className="grid grid-cols-[2rem_1fr_auto] items-center gap-3 rounded-[1.25rem] border border-white/10 bg-white/[0.05] p-4 transition hover:-translate-y-0.5 hover:border-[var(--gold)]/40">
+                  <span className="font-[var(--font-display)] text-[var(--gold)]">#{index + 1}</span>
+                  <span>
+                    <span className="block font-semibold">{item.city}</span>
+                    <span className="text-xs text-slate-400">{item.players} active climbers</span>
+                  </span>
+                  <span className="font-[var(--font-display)] text-xl font-bold">{item.score}</span>
+                </Link>
+              ))}
+            </div>
+          </Card>
+        </section>
         <section className="mt-16 glass grid gap-6 rounded-[2rem] p-6 md:grid-cols-[1fr_auto] md:items-center md:p-8">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.3em] text-[var(--gold)]">Monetization ready</p>
@@ -68,6 +110,17 @@ export default function LandingPage() {
         </section>
       </main>
     </AppShell>
+  );
+}
+
+function CoachPreview({ title, body }: { title: string; body: string }) {
+  return (
+    <div className="rounded-[1.5rem] border border-white/10 bg-slate-950/45 p-5 transition hover:-translate-y-1 hover:bg-slate-950/65">
+      <p className="flex items-center gap-2 font-semibold text-white">
+        <MoveUpRight className="h-4 w-4 text-[var(--mint)]" /> {title}
+      </p>
+      <p className="mt-3 text-sm leading-6 text-slate-300">{body}</p>
+    </div>
   );
 }
 
@@ -98,6 +151,12 @@ function HeroBoard() {
           <p className="text-xs text-slate-400">Review depth</p>
           <p className="font-[var(--font-display)] text-2xl font-bold">Pro-ready</p>
         </Link>
+      </div>
+      <div className="mt-3 rounded-[1.25rem] border border-white/10 bg-slate-950/55 p-4">
+        <p className="flex items-center gap-2 text-sm font-semibold text-white">
+          <Trophy className="h-4 w-4 text-[var(--gold)]" /> Current city boss
+        </p>
+        <p className="mt-1 text-sm text-slate-300">{leaderboardPlayers[0].name} · {leaderboardPlayers[0].rating} · Almaty</p>
       </div>
     </div>
   );
