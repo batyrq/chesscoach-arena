@@ -2,6 +2,8 @@ import type { City, Move } from "@/lib/types";
 
 const profileKey = "chesscoach.profile";
 const gameKeyPrefix = "chesscoach.game.";
+const tabPlayerKey = "chesscoach.tabPlayerId";
+const roomPlayerKeyPrefix = "chesscoach.roomPlayerId.";
 
 export type ArenaProfile = {
   name: string;
@@ -40,4 +42,43 @@ export function loadGameReview(gameId: string) {
   } catch {
     return null;
   }
+}
+
+export function getOrCreateTabPlayerId() {
+  if (typeof window === "undefined") return "server-player";
+  const existing = window.sessionStorage.getItem(tabPlayerKey);
+  if (existing) return existing;
+
+  const id = `player-${crypto.randomUUID?.() ?? Math.random().toString(36).slice(2)}`;
+  window.sessionStorage.setItem(tabPlayerKey, id);
+  return id;
+}
+
+export function saveTabPlayerId(playerId: string) {
+  if (typeof window === "undefined") return;
+  window.sessionStorage.setItem(tabPlayerKey, playerId);
+}
+
+export function getOrCreateRoomPlayerId(roomId: string) {
+  if (typeof window === "undefined") return "server-player";
+  const key = `${roomPlayerKeyPrefix}${roomId}.${getBrowserTabToken()}`;
+  const existing = window.sessionStorage.getItem(key);
+  if (existing) return existing;
+
+  const id = `player-${crypto.randomUUID?.() ?? Math.random().toString(36).slice(2)}`;
+  window.sessionStorage.setItem(key, id);
+  return id;
+}
+
+export function saveRoomPlayerId(roomId: string, playerId: string) {
+  if (typeof window === "undefined") return;
+  window.sessionStorage.setItem(`${roomPlayerKeyPrefix}${roomId}.${getBrowserTabToken()}`, playerId);
+}
+
+export function getBrowserTabToken() {
+  if (!window.name.startsWith("chesscoach-tab-")) {
+    window.name = `chesscoach-tab-${crypto.randomUUID?.() ?? Math.random().toString(36).slice(2)}`;
+  }
+
+  return window.name;
 }

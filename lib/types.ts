@@ -9,6 +9,20 @@ export type Player = {
   isPro?: boolean;
 };
 
+export type RoomRole = "white" | "black" | "spectator";
+
+export type RoomPlayer = {
+  id: string;
+  tabToken?: string;
+  name: string;
+  city: City;
+  rating: number;
+  role: RoomRole;
+  connected: boolean;
+  joinedAt: string;
+  lastSeen: string;
+};
+
 export type Move = {
   san: string;
   from: string;
@@ -30,6 +44,20 @@ export type Game = {
   result: "1-0" | "0-1" | "1/2-1/2" | "*";
   moves: Move[];
   createdAt: string;
+};
+
+export type MultiplayerRoomState = {
+  roomId: string;
+  players: RoomPlayer[];
+  fen: string;
+  pgn: string;
+  moves: Move[];
+  turn: "w" | "b";
+  status: "waiting" | "active" | "checkmate" | "draw" | "ended";
+  result: "1-0" | "0-1" | "1/2-1/2" | "*";
+  version: number;
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type AnalysisResult = {

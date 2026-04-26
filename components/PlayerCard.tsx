@@ -6,9 +6,10 @@ type PlayerCardProps = {
   player: Player;
   active?: boolean;
   clockSeconds?: number;
+  statusLabel?: string;
 };
 
-export function PlayerCard({ player, active, clockSeconds = 300 }: PlayerCardProps) {
+export function PlayerCard({ player, active, clockSeconds = 300, statusLabel }: PlayerCardProps) {
   return (
     <div className={cn("rounded-[1.5rem] border bg-white/[0.05] p-4 transition", active ? "border-[var(--mint)] shadow-[0_0_28px_rgba(118,247,203,0.16)]" : "border-white/10")}>
       <div className="flex items-start justify-between gap-3">
@@ -20,6 +21,11 @@ export function PlayerCard({ player, active, clockSeconds = 300 }: PlayerCardPro
           <p className="mt-1 flex items-center gap-1 text-xs text-slate-400">
             <MapPin className="h-3.5 w-3.5" /> {player.city} · {player.rating}
           </p>
+          {statusLabel ? (
+            <p className="mt-2 inline-flex rounded-full border border-white/10 bg-white/[0.06] px-2.5 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-slate-300">
+              {statusLabel}
+            </p>
+          ) : null}
         </div>
         <div className="rounded-2xl bg-slate-950/70 px-3 py-2 font-[var(--font-display)] text-lg font-bold">
           {formatClock(clockSeconds)}
