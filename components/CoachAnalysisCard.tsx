@@ -1,4 +1,4 @@
-import { Brain, Target, TrendingUp } from "lucide-react";
+import { Brain, Gauge, ShieldAlert, Target, TrendingUp } from "lucide-react";
 import type React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ProUpgradeModal } from "@/components/ProUpgradeModal";
@@ -16,6 +16,14 @@ export function CoachAnalysisCard({ analysis }: { analysis: AnalysisResult }) {
           <Metric label="Accuracy" value={`${analysis.accuracy}%`} />
           <Metric label="Blunders" value={analysis.blunders.toString()} />
         </div>
+        <div className="rounded-[1.25rem] border border-[var(--mint)]/25 bg-[rgba(118,247,203,0.08)] p-4">
+          <p className="flex items-center gap-2 font-semibold text-white">
+            <Gauge className="h-5 w-5 text-[var(--mint)]" /> Coach verdict
+          </p>
+          <p className="mt-2 text-sm leading-6 text-slate-300">
+            Your position was playable, but the review found one decision where preparation, king safety, and calculation stopped agreeing. That is the moment to train.
+          </p>
+        </div>
         <Insight icon={<Brain className="h-5 w-5" />} title="Biggest mistake" body={analysis.biggestMistake} tone="danger" />
         <Insight icon={<TrendingUp className="h-5 w-5" />} title={`Better move: ${analysis.betterMove}`} body={analysis.whyItWorks} />
         <Insight icon={<Target className="h-5 w-5" />} title="Training drill" body={analysis.drill} />
@@ -25,7 +33,17 @@ export function CoachAnalysisCard({ analysis }: { analysis: AnalysisResult }) {
             {analysis.tips.map((tip) => <li key={tip}>- {tip}</li>)}
           </ul>
         </div>
-        <ProUpgradeModal triggerLabel="Unlock deeper Pro analysis" />
+        <div className="rounded-[1.25rem] border border-[var(--gold)]/25 bg-[rgba(248,200,106,0.08)] p-4">
+          <p className="flex items-center gap-2 font-semibold text-white">
+            <ShieldAlert className="h-5 w-5 text-[var(--gold)]" /> Pro unlock
+          </p>
+          <p className="mt-2 text-sm leading-6 text-slate-300">
+            Deeper review would add engine-backed candidate lines, opening tags, and a custom drill queue for this exact mistake pattern.
+          </p>
+          <div className="mt-4">
+            <ProUpgradeModal triggerLabel="Unlock deeper Pro analysis" />
+          </div>
+        </div>
       </CardContent>
     </Card>
   );

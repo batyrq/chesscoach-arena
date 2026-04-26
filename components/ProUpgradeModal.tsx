@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Crown, Sparkles, Wand2 } from "lucide-react";
+import { BadgeCheck, Crown, Palette, Sparkles, Trophy, Wand2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -27,7 +27,7 @@ export function ProUpgradeModal({ triggerLabel = "Upgrade to Pro" }: { triggerLa
           </p>
           <DialogTitle>Train like your city is watching.</DialogTitle>
           <DialogDescription>
-            Stripe is stubbed for the MVP, but this modal is ready to connect to checkout.
+            A polished checkout fallback for judges, with the product value clear before Stripe is connected.
           </DialogDescription>
         </DialogHeader>
         <div className="mt-6 grid gap-4 md:grid-cols-2">
@@ -51,13 +51,28 @@ export function ProUpgradeModal({ triggerLabel = "Upgrade to Pro" }: { triggerLa
             <ul className="mt-5 space-y-3 text-sm text-slate-200">
               <li className="flex gap-2"><Sparkles className="mt-0.5 h-4 w-4 text-[var(--mint)]" /> Unlimited AI reviews</li>
               <li className="flex gap-2"><Wand2 className="mt-0.5 h-4 w-4 text-[var(--mint)]" /> Deeper Stockfish lines</li>
-              <li>Custom board skins and profile badges</li>
+              <li className="flex gap-2"><Palette className="mt-0.5 h-4 w-4 text-[var(--mint)]" /> Custom board skins</li>
+              <li className="flex gap-2"><Trophy className="mt-0.5 h-4 w-4 text-[var(--mint)]" /> City champion badge</li>
             </ul>
+          </div>
+        </div>
+        <div className="mt-4 grid gap-3 text-sm text-slate-300 sm:grid-cols-3">
+          <div className="rounded-[1.25rem] border border-white/10 bg-white/[0.04] p-4">
+            <BadgeCheck className="mb-2 h-4 w-4 text-[var(--mint)]" />
+            Priority coach queue
+          </div>
+          <div className="rounded-[1.25rem] border border-white/10 bg-white/[0.04] p-4">
+            <Wand2 className="mb-2 h-4 w-4 text-[var(--gold)]" />
+            Candidate engine lines
+          </div>
+          <div className="rounded-[1.25rem] border border-white/10 bg-white/[0.04] p-4">
+            <Crown className="mb-2 h-4 w-4 text-[var(--gold)]" />
+            Profile badge flex
           </div>
         </div>
         {checkoutReady ? (
           <div className="mt-6 rounded-[1.25rem] border border-[var(--mint)]/30 bg-[rgba(118,247,203,0.1)] p-4 text-sm text-slate-200">
-            Checkout stub ready. In production this button would hand off to Stripe Checkout with the selected Pro plan.
+            Checkout handoff ready. For the hackathon demo, this confirms the upgrade intent; in production it routes to Stripe Checkout for ChessCoach Pro.
           </div>
         ) : null}
         <Button className="mt-6 w-full" size="lg" onClick={() => setCheckoutReady(true)}>

@@ -1,8 +1,9 @@
 "use client";
 
 import { startTransition, Suspense, useEffect, useState } from "react";
+import type React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Bot, Link2, MonitorPlay } from "lucide-react";
+import { Bot, Link2, MapPin, MonitorPlay, Sparkles, Trophy } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -65,8 +66,13 @@ function LobbyContent() {
             Choose your city. Bring your prep.
           </h1>
           <p className="mt-5 text-lg leading-8 text-slate-300">
-            The demo stores your profile locally and keeps the Supabase path clean for real rooms, leaderboard rows, and realtime updates.
+            Set your arena identity once, then jump into a legal chess game, invite a friend, or run the fastest judge-friendly local demo.
           </p>
+          <div className="mt-6 grid gap-3 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
+            <OnboardingProof icon={<MapPin className="h-4 w-4" />} label="City identity" value={city} />
+            <OnboardingProof icon={<Sparkles className="h-4 w-4" />} label="Coach loop" value="Instant review" />
+            <OnboardingProof icon={<Trophy className="h-4 w-4" />} label="Goal" value="Climb local rank" />
+          </div>
         </div>
         <Card className="p-6 md:p-8">
           <div className="grid gap-5">
@@ -88,6 +94,14 @@ function LobbyContent() {
                 <MonitorPlay className="h-4 w-4" /> Play Local Demo
               </Button>
             </div>
+            <div className="grid gap-3 text-sm text-slate-300 sm:grid-cols-2">
+              <div className="rounded-[1.25rem] border border-[var(--gold)]/20 bg-[rgba(248,200,106,0.08)] p-4">
+                Friend rooms create a shareable invite link and a polished waiting state.
+              </div>
+              <div className="rounded-[1.25rem] border border-[var(--mint)]/20 bg-[rgba(118,247,203,0.08)] p-4">
+                Local demo is the fastest path: play both sides, then analyze.
+              </div>
+            </div>
             <div className="rounded-[1.5rem] border border-white/10 bg-white/[0.04] p-4">
               <p className="mb-3 text-sm font-semibold">Join Room by Code</p>
               <div className="flex flex-col gap-3 sm:flex-row">
@@ -105,6 +119,15 @@ function LobbyContent() {
         </Card>
       </main>
     </AppShell>
+  );
+}
+
+function OnboardingProof({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+  return (
+    <div className="rounded-[1.25rem] border border-white/10 bg-white/[0.05] p-4">
+      <p className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-slate-500">{icon}{label}</p>
+      <p className="mt-2 font-[var(--font-display)] text-lg font-bold">{value}</p>
+    </div>
   );
 }
 

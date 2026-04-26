@@ -9,6 +9,11 @@ import { Select } from "@/components/ui/select";
 export function CityLeaderboard() {
   const [city, setCity] = useState<City>("Almaty");
   const players = useMemo(() => leaderboardPlayers.filter((player) => city === "Other" ? true : player.city === city), [city]);
+  const totals = useMemo(() => ({
+    games: players.reduce((sum, player) => sum + player.games, 0),
+    avgCoach: Math.round(players.reduce((sum, player) => sum + player.coachScore, 0) / Math.max(players.length, 1)),
+    proCount: players.filter((player) => player.isPro).length
+  }), [players]);
 
   return (
     <div className="glass rounded-[2rem] p-5 md:p-7">
@@ -21,6 +26,11 @@ export function CityLeaderboard() {
         <Select value={city} onChange={(event) => setCity(event.target.value as City)} className="md:w-56">
           {cities.map((item) => <option key={item}>{item}</option>)}
         </Select>
+      </div>
+      <div className="mt-6 grid gap-3 sm:grid-cols-3">
+        <CityStat label="Games tracked" value={totals.games.toString()} />
+        <CityStat label="Avg coach score" value={totals.avgCoach.toString()} />
+        <CityStat label="Pro climbers" value={totals.proCount.toString()} />
       </div>
       <div className="mt-6 space-y-3">
         {players.map((player, index) => (
@@ -42,6 +52,15 @@ export function CityLeaderboard() {
           </div>
         ))}
       </div>
+    </div>
+  );
+}
+
+function CityStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-[1.25rem] border border-white/10 bg-slate-950/35 p-4">
+      <p className="font-[var(--font-display)] text-2xl font-bold">{value}</p>
+      <p className="mt-1 text-[0.68rem] uppercase tracking-[0.16em] text-slate-500">{label}</p>
     </div>
   );
 }

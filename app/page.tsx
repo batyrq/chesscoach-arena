@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Brain, Brush, Link2, Map, MoveUpRight, Trophy } from "lucide-react";
+import { ArrowRight, Brain, Brush, Link2, Map, MoveUpRight, ShieldCheck, Trophy, Zap } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -35,6 +35,11 @@ export default function LandingPage() {
             <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-300">
               ChessCoach Arena turns friend matches into focused training loops with legal play, instant review, local pride, and a Pro path that feels real enough to demo today.
             </p>
+            <div className="mt-6 grid max-w-2xl grid-cols-3 gap-3">
+              <HeroMetric value="30s" label="to first move" />
+              <HeroMetric value="81%" label="sample review" />
+              <HeroMetric value="#7" label="city target" />
+            </div>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Button asChild href="/lobby" size="lg">
                 Start Game <ArrowRight className="h-4 w-4" />
@@ -43,10 +48,13 @@ export default function LandingPage() {
                 Play with Friend
               </Button>
             </div>
+            <p className="mt-4 text-sm text-slate-400">
+              Best demo path: start local, play 2-3 legal moves, then open the AI Coach review.
+            </p>
             <div className="mt-10 grid gap-3 sm:grid-cols-4">
               {["Friend rooms", "AI review", "City leaderboard", "Pro path"].map((item) => (
-                <div key={item} className="rounded-2xl border border-white/10 bg-white/[0.05] p-4 text-sm text-slate-300">
-                  <span className="text-[var(--mint)]">●</span> {item}
+                <div key={item} className="rounded-2xl border border-white/10 bg-white/[0.05] p-4 text-sm text-slate-300 transition hover:-translate-y-0.5 hover:border-[var(--mint)]/30">
+                  <span className="text-[var(--mint)]">*</span> {item}
                 </div>
               ))}
             </div>
@@ -105,11 +113,25 @@ export default function LandingPage() {
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.3em] text-[var(--gold)]">Monetization ready</p>
             <h2 className="mt-3 font-[var(--font-display)] text-3xl font-bold">Free gets players hooked. Pro makes the training loop serious.</h2>
+            <div className="mt-5 grid gap-3 text-sm text-slate-300 sm:grid-cols-3">
+              <span className="rounded-2xl bg-white/[0.06] p-3"><Zap className="mb-2 h-4 w-4 text-[var(--mint)]" /> Unlimited reviews</span>
+              <span className="rounded-2xl bg-white/[0.06] p-3"><ShieldCheck className="mb-2 h-4 w-4 text-[var(--gold)]" /> City champion badge</span>
+              <span className="rounded-2xl bg-white/[0.06] p-3"><Brush className="mb-2 h-4 w-4 text-[var(--blue)]" /> Premium board skins</span>
+            </div>
           </div>
           <ProUpgradeModal />
         </section>
       </main>
     </AppShell>
+  );
+}
+
+function HeroMetric({ value, label }: { value: string; label: string }) {
+  return (
+    <div className="rounded-[1.25rem] border border-white/10 bg-slate-950/45 p-4">
+      <p className="font-[var(--font-display)] text-2xl font-bold text-white">{value}</p>
+      <p className="mt-1 text-[0.68rem] uppercase tracking-[0.16em] text-slate-500">{label}</p>
+    </div>
   );
 }
 
