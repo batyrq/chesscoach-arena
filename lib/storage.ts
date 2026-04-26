@@ -1,18 +1,28 @@
-import type { City, Move } from "@/lib/types";
+import type { City, Game, Move } from "@/lib/types";
 
 const profileKey = "chesscoach.profile";
 const gameKeyPrefix = "chesscoach.game.";
 const tabPlayerKey = "chesscoach.tabPlayerId";
 const roomPlayerKeyPrefix = "chesscoach.roomPlayerId.";
+const localPlayerKey = "chesscoach.localPlayerId";
 
 export type ArenaProfile = {
+  playerId: string;
   name: string;
   city: City;
 };
 
-export function saveProfile(profile: ArenaProfile) {
+export type StoredGameReview = {
+  pgn: string;
+  fen: string;
+  moves: Move[];
+  result?: Game["result"];
+  roomId?: string;
+};
+
+export function saveProfile(profile: Omit<ArenaProfile, "playerId"> & { playerId?: string }) {
   if (typeof window === "undefined") return;
-  window.localStorage.setItem(profileKey, JSON.stringify(profile));
+  window.localStorage.setItem(profileKey, JSON.stringify({ ...profile, playerId: profile.playerId ?? getOrCreateLocalPlayerId() }));
 }
 
 export function loadProfile(): ArenaProfile | null {
@@ -21,13 +31,17 @@ export function loadProfile(): ArenaProfile | null {
   if (!raw) return null;
 
   try {
-    return JSON.parse(raw) as ArenaProfile;
+    const profile = JSON.parse(raw) as Partial<ArenaProfile>;
+    if (!profile.name || !profile.city) return null;
+    const hydrated = { playerId: profile.playerId ?? getOrCreateLocalPlayerId(), name: profile.name, city: profile.city };
+    if (!profile.playerId) saveProfile(hydrated);
+    return hydrated;
   } catch {
     return null;
   }
 }
 
-export function saveGameReview(gameId: string, payload: { pgn: string; fen: string; moves: Move[] }) {
+export function saveGameReview(gameId: string, payload: StoredGameReview) {
   if (typeof window === "undefined") return;
   window.localStorage.setItem(`${gameKeyPrefix}${gameId}`, JSON.stringify(payload));
 }
@@ -38,10 +52,20 @@ export function loadGameReview(gameId: string) {
   if (!raw) return null;
 
   try {
-    return JSON.parse(raw) as { pgn: string; fen: string; moves: Move[] };
+    return JSON.parse(raw) as StoredGameReview;
   } catch {
     return null;
   }
+}
+
+export function getOrCreateLocalPlayerId() {
+  if (typeof window === "undefined") return "server-local-player";
+  const existing = window.localStorage.getItem(localPlayerKey);
+  if (existing) return existing;
+
+  const id = `local-${crypto.randomUUID?.() ?? Math.random().toString(36).slice(2)}`;
+  window.localStorage.setItem(localPlayerKey, id);
+  return id;
 }
 
 export function getOrCreateTabPlayerId() {

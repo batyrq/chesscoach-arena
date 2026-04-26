@@ -1,15 +1,12 @@
 import Link from "next/link";
-import { ArrowRight, Crown, Database, Globe2, Sparkles } from "lucide-react";
+import { ArrowRight, Database, Users } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { CityLeaderboard } from "@/components/CityLeaderboard";
 import { ProUpgradeModal } from "@/components/ProUpgradeModal";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { leaderboardPlayers } from "@/lib/demo-data";
 
 export default function LeaderboardPage() {
-  const global = [...leaderboardPlayers].sort((a, b) => b.rating - a.rating).slice(0, 5);
-
   return (
     <AppShell>
       <main className="mx-auto w-full max-w-7xl px-5 pb-16 md:px-8">
@@ -17,10 +14,10 @@ export default function LeaderboardPage() {
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.3em] text-[var(--gold)]">Leaderboard</p>
             <h1 className="mt-4 font-[var(--font-display)] text-5xl font-black leading-tight tracking-[-0.05em]">
-              Every city needs a final boss.
+              Your city ladder updates after every review.
             </h1>
             <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-300">
-              Demo data is live today, and the component is shaped to swap into Supabase rows for real ratings, reviews, and streaks.
+              Demo rivals keep the arena alive, while your local profile, coach score, badges, and recent reviewed games persist in this browser.
             </p>
           </div>
           <Card className="p-5">
@@ -29,62 +26,35 @@ export default function LeaderboardPage() {
                 <Database className="h-5 w-5" />
               </div>
               <div>
-                <p className="font-semibold">Supabase-ready architecture</p>
-                <p className="text-sm text-slate-400">Connect `leaderboard` rows and realtime room events when credentials are added.</p>
+                <p className="font-semibold">Local-first, Supabase-ready</p>
+                <p className="text-sm text-slate-400">Works today with localStorage; production adapters can sync players, games, reviews, and leaderboard entries.</p>
               </div>
             </div>
           </Card>
         </section>
-        <section className="mt-10 grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
-          <Card className="p-5 md:p-7">
-            <div className="mb-5 flex items-center gap-3">
-              <Globe2 className="h-5 w-5 text-[var(--mint)]" />
-              <h2 className="font-[var(--font-display)] text-2xl font-bold">Global top players</h2>
-            </div>
-            <div className="mb-5 grid gap-3 md:grid-cols-3">
-              {global.slice(0, 3).map((player, index) => (
-                <div key={player.id} className="relative overflow-hidden rounded-[1.35rem] border border-[var(--gold)]/20 bg-[linear-gradient(145deg,rgba(248,200,106,0.18),rgba(255,255,255,0.04))] p-4">
-                  <p className="text-xs uppercase tracking-[0.2em] text-[var(--gold)]">Podium #{index + 1}</p>
-                  <p className="mt-3 flex items-center gap-2 font-[var(--font-display)] text-lg font-bold">
-                    {player.name}
-                    {player.isPro ? <Crown className="h-4 w-4 text-[var(--gold)]" /> : null}
-                  </p>
-                  <p className="mt-1 text-xs text-slate-400">{player.city} · {player.rating}</p>
-                  <p className="mt-4 flex items-center gap-1 text-xs text-[var(--mint)]">
-                    <Sparkles className="h-3.5 w-3.5" /> Coach score {player.coachScore}
-                  </p>
-                </div>
-              ))}
-            </div>
-            <div className="space-y-3">
-              {global.map((player, index) => (
-                <div key={player.id} className="grid grid-cols-[2.5rem_1fr_auto] items-center gap-3 rounded-[1.25rem] bg-white/[0.05] p-4">
-                  <div className="font-[var(--font-display)] text-xl font-bold text-[var(--gold)]">#{index + 1}</div>
-                  <div>
-                    <p className="font-semibold">{player.name}</p>
-                    <p className="text-xs text-slate-400">{player.city} · {player.wins}/{player.games} · {player.reviews} reviews · coach {player.coachScore}</p>
-                  </div>
-                  <p className="font-[var(--font-display)] text-xl font-bold">{player.rating}</p>
-                </div>
-              ))}
-            </div>
-            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-              <Button asChild href="/lobby">
-                Play for rating <ArrowRight className="h-4 w-4" />
-              </Button>
-              <ProUpgradeModal triggerLabel="Get profile badge" />
-            </div>
-          </Card>
+
+        <section className="mt-10">
           <CityLeaderboard />
         </section>
+
         <section className="mt-10 rounded-[2rem] border border-[var(--gold)]/25 bg-[rgba(248,200,106,0.08)] p-6">
-          <h2 className="font-[var(--font-display)] text-2xl font-bold">Top players from Almaty are heating up.</h2>
-          <p className="mt-2 text-sm leading-6 text-slate-300">
-            Almaty currently has the strongest Pro review density in the demo set. If this were live, that would be a very fun thing to turn into a weekly city challenge.
-          </p>
-          <Link href="/lobby" className="mt-4 inline-flex text-sm font-semibold text-[var(--gold)]">
-            Start a challenge room
-          </Link>
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.24em] text-[var(--gold)]">
+                <Users className="h-4 w-4" /> Weekly city challenge
+              </p>
+              <h2 className="mt-2 font-[var(--font-display)] text-2xl font-bold">Play, review, climb, repeat.</h2>
+              <p className="mt-2 text-sm leading-6 text-slate-300">
+                The sticky loop is simple: every analyzed game raises your coach profile and gives you a reason to invite the next rival.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <Button asChild>
+                <Link href="/lobby">Play for rating <ArrowRight className="h-4 w-4" /></Link>
+              </Button>
+              <ProUpgradeModal triggerLabel="Get city badge" />
+            </div>
+          </div>
         </section>
       </main>
     </AppShell>

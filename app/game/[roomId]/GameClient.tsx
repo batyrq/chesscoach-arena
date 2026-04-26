@@ -161,7 +161,12 @@ export function GameClient({ roomId }: { roomId: string }) {
 
   function saveAndReview() {
     const gameId = `${roomId}-${Date.now()}`;
-    saveGameReview(gameId, { pgn: game.pgn(), fen: game.fen(), moves });
+    saveGameReview(gameId, {
+      pgn: roomState?.pgn ?? game.pgn(),
+      fen: roomState?.fen ?? game.fen(),
+      moves: roomState?.moves ?? moves,
+      result: roomState?.result ?? getReviewResult(game)
+    });
     window.location.href = `/analysis/${gameId}`;
   }
 
@@ -170,7 +175,9 @@ export function GameClient({ roomId }: { roomId: string }) {
       ["e2", "e4"],
       ["e7", "e5"],
       ["g1", "f3"],
-      ["b8", "c6"]
+      ["b8", "c6"],
+      ["f1", "c4"],
+      ["f8", "c5"]
     ] as const;
     const starter = starters[moves.length % starters.length];
     onDrop(starter[0], starter[1]);
@@ -250,6 +257,12 @@ export function GameClient({ roomId }: { roomId: string }) {
   );
 }
 
+function getReviewResult(game: Chess) {
+  if (game.isCheckmate()) return game.turn() === "w" ? "0-1" : "1-0";
+  if (game.isDraw()) return "1/2-1/2";
+  return "*" as const;
+}
+
 function ArenaHud({ white, black, turnName, moves, roomId, onCoachStarter, canUseStarter, roleLabel }: { white: Player; black: Player; turnName: string; moves: number; roomId: string; onCoachStarter: () => void; canUseStarter: boolean; roleLabel: string }) {
   const friendRoom = !isLocalRoom(roomId);
 
@@ -262,7 +275,7 @@ function ArenaHud({ white, black, turnName, moves, roomId, onCoachStarter, canUs
           {moves === 0 ? "Drag a white piece to start" : `${turnName} to move`}
         </p>
         <p className="mt-1 text-xs text-[var(--gold)]">{friendRoom ? "Invite link room" : roleLabel}</p>
-        {moves < 4 && canUseStarter ? (
+        {moves < 6 && canUseStarter ? (
           <button
             type="button"
             onClick={onCoachStarter}

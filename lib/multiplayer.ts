@@ -4,6 +4,7 @@ import type { ArenaProfile } from "@/lib/storage";
 import type { Move, MultiplayerRoomState, RoomPlayer, RoomRole } from "@/lib/types";
 
 type Unsubscribe = () => void;
+type RoomProfile = Pick<ArenaProfile, "name" | "city">;
 
 export type JoinRoomResult = {
   state: MultiplayerRoomState;
@@ -20,7 +21,7 @@ export type MoveResult = {
 
 export interface MultiplayerAdapter {
   mode: "local" | "supabase";
-  joinRoom(roomId: string, profile: ArenaProfile, playerId: string, tabToken: string): Promise<JoinRoomResult>;
+  joinRoom(roomId: string, profile: RoomProfile, playerId: string, tabToken: string): Promise<JoinRoomResult>;
   subscribe(roomId: string, onState: (state: MultiplayerRoomState) => void): Unsubscribe;
   submitMove(roomId: string, playerId: string, from: string, to: string): Promise<MoveResult>;
   endRoom(roomId: string, playerId: string, status: "ended" | "draw"): Promise<MoveResult>;
@@ -40,7 +41,7 @@ export function createMultiplayerAdapter(): MultiplayerAdapter {
 class LocalBroadcastAdapter implements MultiplayerAdapter {
   mode: "local" | "supabase" = "local";
 
-  async joinRoom(roomId: string, profile: ArenaProfile, playerId: string, tabToken: string) {
+  async joinRoom(roomId: string, profile: RoomProfile, playerId: string, tabToken: string) {
     const now = new Date().toISOString();
     const existing = this.readRoom(roomId) ?? createEmptyRoom(roomId, now);
     const effectivePlayerId = getEffectivePlayerId(existing, playerId, now, tabToken);

@@ -1,6 +1,6 @@
 "use client";
 
-import { startTransition, Suspense, useEffect, useState } from "react";
+import { startTransition, Suspense, useEffect, useMemo, useState } from "react";
 import type React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Bot, Link2, MapPin, MonitorPlay, Sparkles, Trophy } from "lucide-react";
@@ -10,7 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
 import { cities } from "@/lib/demo-data";
-import type { City } from "@/lib/types";
+import { createLeaderboardAdapter } from "@/lib/leaderboard";
+import type { City, PlayerProfile } from "@/lib/types";
 import { loadProfile, saveProfile } from "@/lib/storage";
 import { shortRoomCode } from "@/lib/utils";
 
@@ -28,20 +29,46 @@ function LobbyContent() {
   const [name, setName] = useState("Guest Gambiteer");
   const [city, setCity] = useState<City>("Almaty");
   const [joinCode, setJoinCode] = useState("");
+  const [playerProfile, setPlayerProfile] = useState<PlayerProfile | null>(null);
+  const [profileHydrated, setProfileHydrated] = useState(false);
+  const leaderboard = useMemo(() => createLeaderboardAdapter(), []);
   const friendMode = searchParams.get("mode") === "friend";
 
   useEffect(() => {
     const profile = loadProfile();
-    if (!profile) return;
+    if (!profile) {
+      startTransition(() => setProfileHydrated(true));
+      return;
+    }
 
     startTransition(() => {
       setName(profile.name);
       setCity(profile.city);
+      setPlayerProfile(leaderboard.getCurrentPlayer());
+      setProfileHydrated(true);
     });
-  }, []);
+  }, [leaderboard]);
+
+  useEffect(() => {
+    if (!profileHydrated) return;
+    saveProfile({ name, city });
+  }, [city, name, profileHydrated]);
 
   function persist() {
     saveProfile({ name, city });
+    setPlayerProfile(leaderboard.getCurrentPlayer());
+  }
+
+  function updateName(nextName: string) {
+    setName(nextName);
+    saveProfile({ name: nextName, city });
+    setPlayerProfile(leaderboard.getCurrentPlayer());
+  }
+
+  function updateCity(nextCity: City) {
+    setCity(nextCity);
+    saveProfile({ name, city: nextCity });
+    setPlayerProfile(leaderboard.getCurrentPlayer());
   }
 
   function createRoom(prefix = "ROOM") {
@@ -78,11 +105,11 @@ function LobbyContent() {
           <div className="grid gap-5">
             <label className="space-y-2">
               <span className="text-sm font-semibold text-slate-200">Display name</span>
-              <Input value={name} onChange={(event) => setName(event.target.value)} placeholder="Your chess name" />
+              <Input value={name} onChange={(event) => updateName(event.target.value)} placeholder="Your chess name" />
             </label>
             <label className="space-y-2">
               <span className="text-sm font-semibold text-slate-200">City</span>
-              <Select value={city} onChange={(event) => setCity(event.target.value as City)}>
+              <Select value={city} onChange={(event) => updateCity(event.target.value as City)}>
                 {cities.map((item) => <option key={item}>{item}</option>)}
               </Select>
             </label>
@@ -102,6 +129,7 @@ function LobbyContent() {
                 Local demo is the fastest path: play both sides, then analyze.
               </div>
             </div>
+            <CityRankPreview profile={playerProfile} city={city} />
             <div className="rounded-[1.5rem] border border-white/10 bg-white/[0.04] p-4">
               <p className="mb-3 text-sm font-semibold">Join Room by Code</p>
               <div className="flex flex-col gap-3 sm:flex-row">
@@ -119,6 +147,27 @@ function LobbyContent() {
         </Card>
       </main>
     </AppShell>
+  );
+}
+
+function CityRankPreview({ profile, city }: { profile: PlayerProfile | null; city: City }) {
+  return (
+    <div className="rounded-[1.5rem] border border-[var(--mint)]/20 bg-[rgba(118,247,203,0.07)] p-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--mint)]">City Rank</p>
+          <p className="mt-2 font-[var(--font-display)] text-xl font-bold">
+            {profile ? `${profile.rating} rating · ${profile.coachScore} coach` : `Start at 1200 in ${city}`}
+          </p>
+          <p className="mt-1 text-sm text-slate-300">
+            You are climbing the {city} leaderboard. Every AI review updates your local rank.
+          </p>
+        </div>
+        <div className="rounded-2xl bg-slate-950/45 px-4 py-3 text-sm text-slate-300">
+          {profile ? `${profile.games} games · ${profile.reviews} reviews` : "No ranked games yet"}
+        </div>
+      </div>
+    </div>
   );
 }
 
