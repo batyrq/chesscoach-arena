@@ -30,6 +30,27 @@ create table if not exists public.players (
   updated_at timestamptz default now()
 );
 
+alter table public.players add column if not exists guest_id text;
+alter table public.players add column if not exists pro_status text default 'free';
+alter table public.players add column if not exists updated_at timestamptz default now();
+alter table public.players alter column rating set default 1200;
+alter table public.players alter column wins set default 0;
+alter table public.players alter column losses set default 0;
+alter table public.players alter column draws set default 0;
+alter table public.players alter column games set default 0;
+alter table public.players alter column reviews set default 0;
+alter table public.players alter column coach_score set default 50;
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint
+    where conname = 'players_guest_id_key' and conrelid = 'public.players'::regclass
+  ) then
+    alter table public.players add constraint players_guest_id_key unique (guest_id);
+  end if;
+end $$;
+
 create table if not exists public.rooms (
   id text primary key,
   status text default 'waiting',
@@ -41,6 +62,15 @@ create table if not exists public.rooms (
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
+
+alter table public.rooms add column if not exists status text default 'waiting';
+alter table public.rooms add column if not exists fen text;
+alter table public.rooms add column if not exists pgn text;
+alter table public.rooms add column if not exists current_turn text default 'w';
+alter table public.rooms add column if not exists move_count integer default 0;
+alter table public.rooms add column if not exists version integer default 0;
+alter table public.rooms add column if not exists created_at timestamptz default now();
+alter table public.rooms add column if not exists updated_at timestamptz default now();
 
 create table if not exists public.room_players (
   id uuid primary key default gen_random_uuid(),
@@ -65,6 +95,25 @@ create table if not exists public.moves (
   created_at timestamptz default now()
 );
 
+do $$
+declare
+  constraint_name text;
+begin
+  for constraint_name in
+    select conname
+    from pg_constraint
+    where conrelid = 'public.reviews'::regclass
+      and contype = 'f'
+      and conkey = array[
+        (select attnum from pg_attribute where attrelid = 'public.reviews'::regclass and attname = 'game_id')
+      ]
+  loop
+    execute format('alter table public.reviews drop constraint %I', constraint_name);
+  end loop;
+exception
+  when undefined_table then null;
+end $$;
+
 create table if not exists public.games (
   id text primary key,
   room_id text,
@@ -77,6 +126,29 @@ create table if not exists public.games (
   created_at timestamptz default now(),
   completed_at timestamptz
 );
+
+do $$
+begin
+  if exists (
+    select 1
+    from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'games'
+      and column_name = 'id'
+      and data_type = 'uuid'
+  ) then
+    alter table public.games alter column id type text using id::text;
+  end if;
+end $$;
+
+alter table public.games alter column id type text using id::text;
+alter table public.games alter column room_id drop not null;
+alter table public.games alter column result drop not null;
+alter table public.games alter column result drop default;
+alter table public.games alter column pgn drop not null;
+alter table public.games alter column final_fen drop not null;
+alter table public.games add column if not exists move_count integer default 0;
+alter table public.games add column if not exists completed_at timestamptz;
 
 create table if not exists public.reviews (
   id uuid primary key default gen_random_uuid(),
@@ -96,6 +168,29 @@ create table if not exists public.reviews (
   unique(game_id, player_id)
 );
 
+alter table public.reviews alter column game_id type text using game_id::text;
+alter table public.reviews alter column accuracy drop not null;
+alter table public.reviews add column if not exists provider text default 'engine-lite';
+alter table public.reviews add column if not exists inaccuracies integer default 0;
+alter table public.reviews add column if not exists material_swing jsonb default '[]'::jsonb;
+alter table public.reviews add column if not exists critical_moment jsonb default '{}'::jsonb;
+alter table public.reviews add column if not exists ai_review jsonb default '{}'::jsonb;
+alter table public.reviews add column if not exists puzzle jsonb default '{}'::jsonb;
+alter table public.reviews add column if not exists counted_for_progression boolean default false;
+alter table public.reviews add column if not exists created_at timestamptz default now();
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint
+    where conname = 'reviews_game_id_fkey' and conrelid = 'public.reviews'::regclass
+  ) then
+    alter table public.reviews
+      add constraint reviews_game_id_fkey
+      foreign key (game_id) references public.games(id) on delete cascade;
+  end if;
+end $$;
+
 create table if not exists public.leaderboard_entries (
   id uuid primary key default gen_random_uuid(),
   player_id uuid references public.players(id) on delete cascade unique,
@@ -107,6 +202,61 @@ create table if not exists public.leaderboard_entries (
   reviews integer default 0,
   updated_at timestamptz default now()
 );
+
+alter table public.leaderboard_entries add column if not exists id uuid default gen_random_uuid();
+alter table public.leaderboard_entries add column if not exists wins integer default 0;
+alter table public.leaderboard_entries alter column rating set default 1200;
+alter table public.leaderboard_entries alter column coach_score set default 50;
+alter table public.leaderboard_entries alter column games set default 0;
+alter table public.leaderboard_entries alter column reviews set default 0;
+
+do $$
+declare
+  primary_key_name text;
+  primary_key_is_id boolean;
+begin
+  select conname into primary_key_name
+  from pg_constraint
+  where conrelid = 'public.leaderboard_entries'::regclass
+    and contype = 'p';
+
+  select exists (
+    select 1
+    from pg_constraint c
+    join pg_attribute a
+      on a.attrelid = c.conrelid
+     and a.attnum = any(c.conkey)
+    where c.conrelid = 'public.leaderboard_entries'::regclass
+      and c.contype = 'p'
+      and a.attname = 'id'
+  ) into primary_key_is_id;
+
+  if primary_key_name is not null and not primary_key_is_id then
+    execute format('alter table public.leaderboard_entries drop constraint %I', primary_key_name);
+  end if;
+
+  if not exists (
+    select 1 from pg_constraint
+    where conrelid = 'public.leaderboard_entries'::regclass
+      and contype = 'p'
+      and conkey = array[
+        (select attnum from pg_attribute where attrelid = 'public.leaderboard_entries'::regclass and attname = 'id')
+      ]
+  ) then
+    alter table public.leaderboard_entries add constraint leaderboard_entries_pkey primary key (id);
+  end if;
+end $$;
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint
+    where conname = 'leaderboard_entries_player_id_key'
+      and conrelid = 'public.leaderboard_entries'::regclass
+  ) then
+    alter table public.leaderboard_entries add constraint leaderboard_entries_player_id_key unique (player_id);
+  end if;
+end $$;
 
 create table if not exists public.subscriptions (
   id uuid primary key default gen_random_uuid(),

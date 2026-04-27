@@ -1,17 +1,15 @@
-import { createClient } from "@supabase/supabase-js";
+export {
+  getBrowserSupabaseClient,
+  isSupabaseConfigured,
+} from "./supabase/client";
+
+import { getBrowserSupabaseClient } from "./supabase/client";
 
 export function getSupabaseClient() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-  if (!url || !anonKey) {
-    return null;
-  }
-
-  return createClient(url, anonKey);
+  return getBrowserSupabaseClient();
 }
 
 export const supabaseSchemaNotes = {
-  rooms: "id, room_code, fen, pgn, white_player, black_player, city, status, updated_at",
-  leaderboard: "id, display_name, city, rating, wins, reviews, streak, is_pro"
+  rooms: "id, status, fen, pgn, current_turn, move_count, version, updated_at",
+  leaderboard: "id, player_id, city, rating, coach_score, games, wins, reviews, updated_at",
 };

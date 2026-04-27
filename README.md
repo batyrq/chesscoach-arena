@@ -66,29 +66,46 @@ If dependencies are already installed, `npm install` can be skipped.
 
 The app runs in local demo mode without Supabase or Stripe credentials.
 
-Optional production-oriented variables:
+Optional Supabase-backed upgrade variables:
 
 ```text
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+GEMINI_API_KEY=
+NEXT_PUBLIC_DEMO_PAYMENTS=true
 ```
 
 When Supabase variables are missing, the app silently uses local adapters and shows local demo rankings.
 
+The `supabase-ai-stripe-upgrade` branch adds Supabase schema, RLS, Realtime-ready tables, and server/browser client helpers. The existing local fallback behavior remains the default safety net for demo flow.
+
 ## Supabase Schema
 
-Schema notes live in:
+Setup notes live in:
+
+```text
+docs/supabase-setup.md
+```
+
+Schema and migration files live in:
 
 ```text
 supabase/schema.sql
+supabase/migrations/
 ```
 
-The planned tables are:
+The backend tables are:
 
 - `players`
+- `rooms`
+- `room_players`
+- `moves`
 - `games`
 - `reviews`
 - `leaderboard_entries`
+- `subscriptions`
+- `badges`
 
 ## Verification
 
