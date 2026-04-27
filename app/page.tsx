@@ -49,7 +49,7 @@ export default function LandingPage() {
               </Button>
             </div>
             <p className="mt-4 text-sm text-slate-400">
-              Best demo path: start local, play 2-3 legal moves, then open the AI Coach review.
+              Best demo path: start local, play a short game, then open the AI Coach review.
             </p>
             <div className="mt-10 grid gap-3 sm:grid-cols-4">
               {["Friend rooms", "AI review", "City leaderboard", "Pro path"].map((item) => (

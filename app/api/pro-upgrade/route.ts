@@ -27,10 +27,38 @@ export async function POST(request: Request) {
   }
 
   try {
+    const token = getBearerToken(request);
+    const authUser = token ? (await supabase.auth.getUser(token)).data.user : null;
+    const lookup = authUser
+      ? await supabase.from("players").select("id,guest_id").eq("auth_user_id", authUser.id).maybeSingle()
+      : { data: null, error: null };
+
+    if (lookup.error) throw lookup.error;
+
+    if (lookup.data) {
+      const { data: player, error: updateError } = await supabase
+        .from("players")
+        .update({
+          display_name: displayName,
+          city,
+          guest_id: lookup.data.guest_id ?? guestId,
+          pro_status: "pro_demo",
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", lookup.data.id)
+        .select("id")
+        .single();
+
+      if (updateError) throw updateError;
+      await saveSubscription(supabase, player.id, plan);
+      return NextResponse.json({ ok: true, provider: "supabase", status: "active", plan });
+    }
+
     const { data: player, error: playerError } = await supabase
       .from("players")
       .upsert({
         guest_id: guestId,
+        auth_user_id: authUser?.id ?? null,
         display_name: displayName,
         city,
         pro_status: "pro_demo",
@@ -41,22 +69,7 @@ export async function POST(request: Request) {
 
     if (playerError) throw playerError;
 
-    await supabase
-      .from("subscriptions")
-      .update({ status: "canceled" })
-      .eq("player_id", player.id)
-      .eq("provider", "demo")
-      .neq("status", "canceled");
-
-    const { error: subscriptionError } = await supabase.from("subscriptions").insert({
-      player_id: player.id,
-      provider: "demo",
-      status: "active",
-      plan,
-      started_at: new Date().toISOString(),
-    });
-
-    if (subscriptionError) throw subscriptionError;
+    await saveSubscription(supabase, player.id, plan);
 
     return NextResponse.json({ ok: true, provider: "supabase", status: "active", plan });
   } catch {
@@ -78,4 +91,29 @@ async function safeJson(request: Request): Promise<ProUpgradeBody> {
 
 function normalizeText(value?: string) {
   return typeof value === "string" ? value.trim().slice(0, 120) : "";
+}
+
+function getBearerToken(request: Request) {
+  const header = request.headers.get("authorization") ?? "";
+  const match = header.match(/^Bearer\s+(.+)$/i);
+  return match?.[1] ?? "";
+}
+
+async function saveSubscription(supabase: NonNullable<ReturnType<typeof getServerSupabaseAdminClient>>, playerId: string, plan: string) {
+  await supabase
+    .from("subscriptions")
+    .update({ status: "canceled" })
+    .eq("player_id", playerId)
+    .eq("provider", "demo")
+    .neq("status", "canceled");
+
+  const { error } = await supabase.from("subscriptions").insert({
+    player_id: playerId,
+    provider: "demo",
+    status: "active",
+    plan,
+    started_at: new Date().toISOString(),
+  });
+
+  if (error) throw error;
 }

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Swords } from "lucide-react";
+import { AuthStatus } from "@/components/AuthStatus";
 import { ProUpgradeModal } from "@/components/ProUpgradeModal";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -16,16 +17,33 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <p className="text-xs text-slate-500">City-ranked training battles</p>
           </div>
         </Link>
-        <nav className="hidden items-center gap-6 text-sm text-slate-300 md:flex">
+        <nav className="hidden items-center gap-6 text-sm text-slate-300 lg:flex">
           <Link className="transition hover:text-white" href="/lobby">Lobby</Link>
           <Link className="transition hover:text-white" href="/leaderboard">Leaderboard</Link>
           <ProUpgradeModal triggerLabel="Pro" />
+          <AuthStatus />
         </nav>
-        <div className="md:hidden">
+        <div className="hidden items-center gap-3 md:flex lg:hidden">
+          <Link className="text-sm text-slate-300 transition hover:text-white" href="/lobby">Lobby</Link>
+          <Link className="text-sm text-slate-300 transition hover:text-white" href="/leaderboard">Leaderboard</Link>
+          <AuthStatus />
+        </div>
+        <div className="flex items-center gap-2 md:hidden">
+          <ButtonLink href="/lobby" label="Lobby" />
+          <ButtonLink href="/leaderboard" label="Rank" />
           <ProUpgradeModal triggerLabel="Pro" />
+          <AuthStatus />
         </div>
       </header>
       {children}
     </div>
+  );
+}
+
+function ButtonLink({ href, label }: { href: string; label: string }) {
+  return (
+    <Link href={href} className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-2 text-xs font-semibold text-slate-300">
+      {label}
+    </Link>
   );
 }

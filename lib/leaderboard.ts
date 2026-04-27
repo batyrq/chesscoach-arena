@@ -29,6 +29,7 @@ type RecordReviewInput = {
 type SupabasePlayerRow = {
   id: string;
   guest_id: string | null;
+  auth_user_id?: string | null;
   display_name: string;
   city: City;
   rating: number | null;
@@ -413,14 +414,70 @@ export class SupabaseLeaderboardAdapter implements LeaderboardAdapter {
     if (!profile) return null;
 
     const fallbackProfile = createPlayerProfile(profile.playerId, profile.name, profile.city);
+    const { data: sessionData } = await client.auth.getSession();
+    const authUserId = sessionData.session?.user.id;
+
+    if (authUserId) {
+      const { data: authPlayer, error: authPlayerError } = await client
+        .from("players")
+        .select("id,guest_id,auth_user_id,display_name,city,rating,wins,losses,draws,games,reviews,coach_score,pro_status,updated_at")
+        .eq("auth_user_id", authUserId)
+        .maybeSingle();
+
+      if (authPlayerError) throw authPlayerError;
+      if (authPlayer) {
+        const { data, error } = await client
+          .from("players")
+          .update({
+            display_name: profile.name.trim() || "Guest Gambiteer",
+            city: profile.city,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", (authPlayer as SupabasePlayerRow).id)
+          .select("id,guest_id,auth_user_id,display_name,city,rating,wins,losses,draws,games,reviews,coach_score,pro_status,updated_at")
+          .single();
+
+        if (error) throw error;
+        const player = rowToPlayerProfile(data as SupabasePlayerRow, fallbackProfile.badges);
+        const badges = await this.getBadgesForClient(client, player.playerId);
+        const hydrated = { ...player, badges, isPro: player.isPro || loadProStatus().isPro };
+        await this.saveLeaderboardEntry(client, hydrated);
+        return hydrated;
+      }
+    }
+
+    if (isUuid(profile.playerId)) {
+      const { data, error } = await client
+        .from("players")
+        .update({
+          display_name: profile.name.trim() || "Guest Gambiteer",
+          city: profile.city,
+          ...(authUserId ? { auth_user_id: authUserId } : {}),
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", profile.playerId)
+        .select("id,guest_id,auth_user_id,display_name,city,rating,wins,losses,draws,games,reviews,coach_score,pro_status,updated_at")
+        .maybeSingle();
+
+      if (error) throw error;
+      if (data) {
+        const player = rowToPlayerProfile(data as SupabasePlayerRow, fallbackProfile.badges);
+        const badges = await this.getBadgesForClient(client, player.playerId);
+        const hydrated = { ...player, badges, isPro: player.isPro || loadProStatus().isPro };
+        await this.saveLeaderboardEntry(client, hydrated);
+        return hydrated;
+      }
+    }
+
     const { data, error } = await client
       .from("players")
       .upsert({
         guest_id: profile.playerId,
+        ...(authUserId ? { auth_user_id: authUserId } : {}),
         display_name: profile.name.trim() || "Guest Gambiteer",
         city: profile.city,
       }, { onConflict: "guest_id" })
-      .select("id,guest_id,display_name,city,rating,wins,losses,draws,games,reviews,coach_score,pro_status,updated_at")
+      .select("id,guest_id,auth_user_id,display_name,city,rating,wins,losses,draws,games,reviews,coach_score,pro_status,updated_at")
       .single();
 
     if (error) throw error;
@@ -579,7 +636,7 @@ export class SupabaseLeaderboardAdapter implements LeaderboardAdapter {
     if (!playerIds.length) return [];
     const { data, error } = await client
       .from("players")
-      .select("id,guest_id,display_name,city,rating,wins,losses,draws,games,reviews,coach_score,pro_status,updated_at")
+      .select("id,guest_id,auth_user_id,display_name,city,rating,wins,losses,draws,games,reviews,coach_score,pro_status,updated_at")
       .in("id", playerIds);
 
     if (error) throw error;
@@ -823,4 +880,8 @@ function toReviewRecord(
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
+}
+
+function isUuid(value: string) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 }

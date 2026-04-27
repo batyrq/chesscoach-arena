@@ -1,6 +1,7 @@
 "use client";
 
 import type { City, PlayerProfile } from "@/lib/types";
+import { getBrowserSupabaseClient } from "@/lib/supabase/client";
 import { getOrCreateLocalPlayerId, loadProfile, saveProfile } from "@/lib/storage";
 
 const proStatusKey = "chesscoach.proStatus";
@@ -60,9 +61,14 @@ export async function activateDemoPro(input: ProUpgradeInput = {}) {
   saveLocalProStatus(localStatus);
 
   try {
+    const supabase = getBrowserSupabaseClient();
+    const { data: sessionData } = supabase ? await supabase.auth.getSession() : { data: { session: null } };
     const response = await fetch("/api/pro-upgrade", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        ...(sessionData.session?.access_token ? { Authorization: `Bearer ${sessionData.session.access_token}` } : {}),
+      },
       body: JSON.stringify({
         guestId: profile.playerId,
         displayName: profile.name,

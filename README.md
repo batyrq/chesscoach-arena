@@ -18,6 +18,7 @@ ChessCoach Arena is a startup-style chess training prototype built for the nFact
 - City leaderboard with current-player highlighting.
 - Badges, rating, coach score, recent reviews, and double-count prevention.
 - Demo Pro upgrade flow with Founder Pro status.
+- Email/password auth with guest fallback.
 
 ## Tech Stack
 
@@ -79,6 +80,16 @@ The Pro checkout is demo-only. It never asks for a card, never collects payment,
 ## Fallback Behavior
 
 Supabase and Gemini are optional for the demo path. If Supabase is unavailable, profiles, friend rooms, reviews, leaderboard progress, and Pro status continue locally. If Gemini is unavailable, the coach review falls back to deterministic engine-lite output without crashing.
+
+## Auth
+
+ChessCoach Arena supports Supabase email/password auth for saving coach history, city rank, and demo Pro status across sessions. For demo mode, disable email confirmation in Supabase:
+
+```text
+Authentication -> Providers -> Email -> Confirm Email OFF
+```
+
+If confirmation is still enabled, signup may create an account without an immediate session. Guest mode remains available either way.
 
 ## Supabase
 

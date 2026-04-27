@@ -16,6 +16,7 @@ $$;
 create table if not exists public.players (
   id uuid primary key default gen_random_uuid(),
   guest_id text unique,
+  auth_user_id uuid references auth.users(id) on delete set null,
   display_name text not null,
   city text not null,
   rating integer default 1200,
@@ -129,6 +130,10 @@ create table if not exists public.badges (
 );
 
 create index if not exists players_guest_id_idx on public.players(guest_id);
+create unique index if not exists players_auth_user_id_key
+  on public.players(auth_user_id)
+  where auth_user_id is not null;
+create index if not exists players_auth_user_id_idx on public.players(auth_user_id);
 create index if not exists players_city_idx on public.players(city);
 create index if not exists rooms_updated_at_idx on public.rooms(updated_at);
 create index if not exists room_players_room_id_idx on public.room_players(room_id);
