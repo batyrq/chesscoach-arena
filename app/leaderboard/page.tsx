@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { ArrowRight, Database, Users } from "lucide-react";
+import type React from "react";
+import { ArrowRight, Crosshair, Medal, ShieldCheck, Swords, Trophy } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { CityLeaderboard } from "@/components/CityLeaderboard";
 import { ProUpgradeModal } from "@/components/ProUpgradeModal";
@@ -10,26 +11,30 @@ export default function LeaderboardPage() {
   return (
     <AppShell>
       <main className="mx-auto w-full max-w-7xl px-5 pb-16 md:px-8">
-        <section className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-end">
+        <section className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr] lg:items-end">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-[var(--gold)]">Leaderboard</p>
+            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-[var(--gold)]">City Arena</p>
             <h1 className="mt-4 font-[var(--font-display)] text-5xl font-black leading-tight tracking-[-0.05em]">
-              Your city ladder updates after every review.
+              City Arena Rankings
             </h1>
             <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-300">
-              Live Supabase rankings persist your profile, coach score, badges, and reviewed games, with the local demo ladder still ready when the backend is unavailable.
+              Win games, review your mistakes, and climb your city leaderboard.
             </p>
-          </div>
-          <Card className="p-5">
-            <div className="flex items-center gap-3">
-              <div className="rounded-2xl bg-[var(--mint)] p-3 text-slate-950">
-                <Database className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="font-semibold">Live when configured, local when not</p>
-                <p className="text-sm text-slate-400">Supabase powers the real ladder; localStorage keeps the demo flow resilient.</p>
-              </div>
+            <p className="mt-3 text-sm font-semibold text-slate-400">Your rank updates after reviewed games.</p>
+            <div className="mt-7 flex flex-wrap gap-3">
+              <Button asChild>
+                <Link href="/lobby">Play a Game <ArrowRight className="h-4 w-4" /></Link>
+              </Button>
+              <Button asChild variant="secondary">
+                <Link href="/analysis/demo">Start Training</Link>
+              </Button>
+              <ProUpgradeModal triggerLabel="Go Pro" />
             </div>
+          </div>
+          <Card className="grid gap-4 p-5 sm:grid-cols-3">
+            <ArenaProof icon={<Trophy className="h-5 w-5" />} label="City Champions" value="Top players rise first" />
+            <ArenaProof icon={<Crosshair className="h-5 w-5" />} label="Coach Score" value="Mistakes become points" />
+            <ArenaProof icon={<ShieldCheck className="h-5 w-5" />} label="Founder Pro" value="Premium status badge" />
           </Card>
         </section>
 
@@ -41,22 +46,32 @@ export default function LeaderboardPage() {
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
               <p className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.24em] text-[var(--gold)]">
-                <Users className="h-4 w-4" /> Weekly city challenge
+                <Medal className="h-4 w-4" /> Weekly city challenge
               </p>
               <h2 className="mt-2 font-[var(--font-display)] text-2xl font-bold">Play, review, climb, repeat.</h2>
               <p className="mt-2 text-sm leading-6 text-slate-300">
-                The sticky loop is simple: every analyzed game raises your coach profile and gives you a reason to invite the next rival.
+                Every coach review sharpens your form and gives you a reason to challenge the next rival.
               </p>
             </div>
             <div className="flex flex-wrap gap-3">
               <Button asChild>
-                <Link href="/lobby">Play for rating <ArrowRight className="h-4 w-4" /></Link>
+                <Link href="/lobby">Enter Arena <Swords className="h-4 w-4" /></Link>
               </Button>
-              <ProUpgradeModal triggerLabel="Get city badge" />
+              <ProUpgradeModal triggerLabel="Founder Pro" />
             </div>
           </div>
         </section>
       </main>
     </AppShell>
+  );
+}
+
+function ArenaProof({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+  return (
+    <div className="rounded-[1.25rem] border border-white/10 bg-slate-950/40 p-4">
+      <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-2xl bg-white/10 text-[var(--gold)]">{icon}</div>
+      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">{label}</p>
+      <p className="mt-1 text-sm font-semibold text-slate-200">{value}</p>
+    </div>
   );
 }
