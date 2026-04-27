@@ -1,27 +1,23 @@
 # ChessCoach Arena
 
-A friend-link chess arena with AI post-game coaching, city leaderboards, and Pro monetization.
+Play chess with a friend, get AI coaching after the game, solve your blunders as puzzles, and climb your city leaderboard.
 
-## Why It Is Different
+Live demo: https://nfactorial.vercel.app
 
-ChessCoach Arena is not just a chessboard. It turns a casual match into a full training and progression loop:
+ChessCoach Arena is a startup-style chess training prototype built for the nFactorial / incubator challenge. It keeps the first demo path fast: choose a city, play legal chess, analyze the game, generate a deeper coach review, reveal a blunder puzzle, and watch your city profile progress.
 
-- Friend-link multiplayer rooms for quick head-to-head games.
-- AI Coach review that explains the biggest mistake, better move, and training plan.
-- Local city leaderboard for Almaty, Astana, Shymkent, Karaganda, and Other.
-- Player progression with rating, coach score, badges, and recent review activity.
-- Pro monetization path for deeper engine lines, custom skins, and city badges.
+## Core Features
 
-## Features
-
-- Polished startup-style routes: landing, lobby, game, analysis, and leaderboard.
-- Legal chess moves and game state validation with `chess.js`.
-- Friend-room multiplayer infrastructure with local realtime fallback via `BroadcastChannel` and `localStorage`.
-- Engine-lite AI Coach analysis using actual saved move history, FEN, and PGN.
-- City leaderboard and local-first player progression persisted in the browser.
-- Pro upgrade modal with a Stripe-ready checkout placeholder.
-- Supabase-ready adapter shape for realtime rooms and leaderboard persistence.
-- Vercel-ready Next.js App Router structure.
+- Legal chess gameplay powered by `chess.js`.
+- Local games and friend-room multiplayer.
+- Supabase Realtime friend rooms when configured.
+- Local fallback through `BroadcastChannel`, `localStorage`, and browser-first adapters.
+- Engine-lite AI Coach baseline review from the actual move history.
+- Gemini deeper review with engine-lite fallback.
+- Blunder-to-puzzle training card with hidden answer reveal.
+- City leaderboard with current-player highlighting.
+- Badges, rating, coach score, recent reviews, and double-count prevention.
+- Demo Pro upgrade flow with Founder Pro status.
 
 ## Tech Stack
 
@@ -31,56 +27,60 @@ ChessCoach Arena is not just a chessboard. It turns a casual match into a full t
 - shadcn/ui-style local primitives
 - Framer Motion
 - chess.js
-- localStorage and BroadcastChannel
-- Supabase-ready adapters
+- Supabase
+- Gemini API
+- Vercel
+
+## Environment Variables
+
+The app works without backend credentials by using local fallback modes. For the live Supabase/Gemini path, configure these variables without committing values:
+
+```text
+NEXT_PUBLIC_SUPABASE_URL
+NEXT_PUBLIC_SUPABASE_ANON_KEY
+SUPABASE_SERVICE_ROLE_KEY
+GEMINI_API_KEY
+GEMINI_MODEL
+NEXT_PUBLIC_DEMO_PAYMENTS
+```
+
+`SUPABASE_SERVICE_ROLE_KEY` and `GEMINI_API_KEY` are server-side only. Do not expose them in client code.
 
 ## Local Setup
 
 ```bash
 npm install
-npm run dev -- --port 3025
+npm run dev
 ```
 
-Open:
+Useful verification commands:
 
-```text
-http://localhost:3025
+```bash
+npm run lint
+npm run typecheck
+npm run build
 ```
 
-If dependencies are already installed, `npm install` can be skipped.
-
-## Demo Flow
+## Judge Demo Flow
 
 1. Open the landing page.
-2. Click `Start Game`.
-3. Enter a display name and choose a city in the lobby.
-4. Click `Play Local Demo`.
-5. Make a few legal moves or use the coach starter move.
+2. Go to the lobby.
+3. Enter a display name and choose a city.
+4. Start a local game.
+5. Make at least six legal moves, or use the coach starter move.
 6. Click `Analyze Game`.
-7. Review the AI Coach feedback and city ranking update.
-8. Open the leaderboard and confirm the local player appears in the city ranking.
-9. Open the Pro modal from the navbar, analysis page, or leaderboard.
-10. Return to the lobby and create a friend room to demo the invite-link flow.
+7. Generate the deeper AI review.
+8. Reveal the blunder-puzzle answer.
+9. Open the leaderboard and confirm the current player, badges, and city rank.
+10. Open `/pro` and complete the demo Pro upgrade.
 
-## Environment Variables
+The Pro checkout is demo-only. It never asks for a card, never collects payment, and does not integrate Stripe.
 
-The app runs in local demo mode without Supabase or Stripe credentials.
+## Fallback Behavior
 
-Optional Supabase-backed upgrade variables:
+Supabase and Gemini are optional for the demo path. If Supabase is unavailable, profiles, friend rooms, reviews, leaderboard progress, and Pro status continue locally. If Gemini is unavailable, the coach review falls back to deterministic engine-lite output without crashing.
 
-```text
-NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
-SUPABASE_SERVICE_ROLE_KEY=
-GEMINI_API_KEY=
-NEXT_PUBLIC_DEMO_PAYMENTS=true
-```
-
-When Supabase variables are missing, the app silently uses local adapters and shows local demo rankings.
-
-The `supabase-ai-stripe-upgrade` branch adds Supabase schema, RLS, Realtime-ready tables, and server/browser client helpers. The existing local fallback behavior remains the default safety net for demo flow.
-
-## Supabase Schema
+## Supabase
 
 Setup notes live in:
 
@@ -95,7 +95,7 @@ supabase/schema.sql
 supabase/migrations/
 ```
 
-The backend tables are:
+Main tables:
 
 - `players`
 - `rooms`
@@ -107,16 +107,9 @@ The backend tables are:
 - `subscriptions`
 - `badges`
 
-## Verification
+## Submission Notes
 
-```bash
-npm run lint
-npm run typecheck
-npm run build
-```
-
-## Current Limitations
-
-- AI Coach is engine-lite and deterministic, not Stockfish WASM yet.
-- Stripe checkout is represented by a polished modal handoff.
-- Supabase adapters are shaped for production but local preview uses browser storage by default.
+- Production URL: https://nfactorial.vercel.app
+- Branch: `supabase-ai-stripe-upgrade`
+- Payment flow: demo-only Founder Pro upgrade.
+- Local fallback: intentionally preserved for reliable judging.
