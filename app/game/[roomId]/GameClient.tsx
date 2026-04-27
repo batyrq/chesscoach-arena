@@ -165,7 +165,8 @@ export function GameClient({ roomId }: { roomId: string }) {
       pgn: roomState?.pgn ?? game.pgn(),
       fen: roomState?.fen ?? game.fen(),
       moves: roomState?.moves ?? moves,
-      result: roomState?.result ?? getReviewResult(game)
+      result: roomState?.result ?? getReviewResult(game),
+      roomId
     });
     window.location.href = `/analysis/${gameId}`;
   }

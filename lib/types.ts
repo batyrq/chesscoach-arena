@@ -116,7 +116,7 @@ export type CoachTip = {
   body: string;
 };
 
-export type Badge = "City Climber" | "Coach Reviewed" | "No Blunders" | "Rising Star";
+export type Badge = "City Climber" | "Coach Reviewed" | "No Blunders" | "Rising Star" | "City Champion";
 
 export type PlayerProfile = {
   playerId: string;
@@ -166,6 +166,10 @@ export type LeaderboardUpdateResult = {
   ratingChange: number;
   coachScoreChange: number;
   cityRank: number;
+  oldRank: number | null;
+  newRank: number | null;
+  badgesEarned: Badge[];
+  adapterMode: "supabase" | "local";
 };
 
 export type LeaderboardPlayer = Player & {

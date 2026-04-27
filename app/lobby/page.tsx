@@ -32,6 +32,7 @@ function LobbyContent() {
   const [playerProfile, setPlayerProfile] = useState<PlayerProfile | null>(null);
   const [profileHydrated, setProfileHydrated] = useState(false);
   const leaderboard = useMemo(() => createLeaderboardAdapter(), []);
+  const [leaderboardMode, setLeaderboardMode] = useState<"supabase" | "local">("local");
   const friendMode = searchParams.get("mode") === "friend";
 
   useEffect(() => {
@@ -44,8 +45,13 @@ function LobbyContent() {
     startTransition(() => {
       setName(profile.name);
       setCity(profile.city);
-      setPlayerProfile(leaderboard.getCurrentPlayer());
       setProfileHydrated(true);
+    });
+    void leaderboard.getCurrentPlayer().then((player) => {
+      startTransition(() => {
+        setPlayerProfile(player);
+        setLeaderboardMode(leaderboard.mode);
+      });
     });
   }, [leaderboard]);
 
@@ -54,31 +60,45 @@ function LobbyContent() {
     saveProfile({ name, city });
   }, [city, name, profileHydrated]);
 
-  function persist() {
+  async function persist() {
     saveProfile({ name, city });
-    setPlayerProfile(leaderboard.getCurrentPlayer());
+    const player = await leaderboard.getCurrentPlayer();
+    startTransition(() => {
+      setPlayerProfile(player);
+      setLeaderboardMode(leaderboard.mode);
+    });
   }
 
   function updateName(nextName: string) {
     setName(nextName);
     saveProfile({ name: nextName, city });
-    setPlayerProfile(leaderboard.getCurrentPlayer());
+    void leaderboard.getCurrentPlayer().then((player) => {
+      startTransition(() => {
+        setPlayerProfile(player);
+        setLeaderboardMode(leaderboard.mode);
+      });
+    });
   }
 
   function updateCity(nextCity: City) {
     setCity(nextCity);
     saveProfile({ name, city: nextCity });
-    setPlayerProfile(leaderboard.getCurrentPlayer());
+    void leaderboard.getCurrentPlayer().then((player) => {
+      startTransition(() => {
+        setPlayerProfile(player);
+        setLeaderboardMode(leaderboard.mode);
+      });
+    });
   }
 
-  function createRoom(prefix = "ROOM") {
-    persist();
+  async function createRoom(prefix = "ROOM") {
+    await persist();
     const roomId = `${prefix}-${Math.random().toString(36).slice(2, 8)}`;
     router.push(`/game/${roomId}`);
   }
 
-  function joinRoom() {
-    persist();
+  async function joinRoom() {
+    await persist();
     router.push(`/game/${shortRoomCode(joinCode || "ARENA01")}`);
   }
 
@@ -114,10 +134,10 @@ function LobbyContent() {
               </Select>
             </label>
             <div className="grid gap-3 sm:grid-cols-2">
-              <Button onClick={() => createRoom("FRIEND")} size="lg">
+              <Button onClick={() => void createRoom("FRIEND")} size="lg">
                 <Link2 className="h-4 w-4" /> Create Friend Room
               </Button>
-              <Button onClick={() => createRoom("LOCAL")} variant="secondary" size="lg">
+              <Button onClick={() => void createRoom("LOCAL")} variant="secondary" size="lg">
                 <MonitorPlay className="h-4 w-4" /> Play Local Demo
               </Button>
             </div>
@@ -129,12 +149,12 @@ function LobbyContent() {
                 Local demo is the fastest path: play both sides, then analyze.
               </div>
             </div>
-            <CityRankPreview profile={playerProfile} city={city} />
+            <CityRankPreview profile={playerProfile} city={city} mode={leaderboardMode} />
             <div className="rounded-[1.5rem] border border-white/10 bg-white/[0.04] p-4">
               <p className="mb-3 text-sm font-semibold">Join Room by Code</p>
               <div className="flex flex-col gap-3 sm:flex-row">
                 <Input value={joinCode} onChange={(event) => setJoinCode(event.target.value)} placeholder="ARENA01" />
-                <Button onClick={joinRoom} variant="secondary" className="sm:w-36">
+                <Button onClick={() => void joinRoom()} variant="secondary" className="sm:w-36">
                   Join
                 </Button>
               </div>
@@ -150,7 +170,7 @@ function LobbyContent() {
   );
 }
 
-function CityRankPreview({ profile, city }: { profile: PlayerProfile | null; city: City }) {
+function CityRankPreview({ profile, city, mode }: { profile: PlayerProfile | null; city: City; mode: "supabase" | "local" }) {
   return (
     <div className="rounded-[1.5rem] border border-[var(--mint)]/20 bg-[rgba(118,247,203,0.07)] p-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -160,7 +180,10 @@ function CityRankPreview({ profile, city }: { profile: PlayerProfile | null; cit
             {profile ? `${profile.rating} rating · ${profile.coachScore} coach` : `Start at 1200 in ${city}`}
           </p>
           <p className="mt-1 text-sm text-slate-300">
-            You are climbing the {city} leaderboard. Every AI review updates your local rank.
+            You are ready to climb {city}. Every AI review updates your {mode === "supabase" ? "live Supabase" : "local demo"} rank.
+          </p>
+          <p className="mt-2 inline-flex rounded-full border border-white/10 bg-slate-950/40 px-3 py-1 text-xs font-semibold text-slate-300">
+            {mode === "supabase" ? "Live Supabase ranking" : "Local demo ranking"}
           </p>
         </div>
         <div className="rounded-2xl bg-slate-950/45 px-4 py-3 text-sm text-slate-300">

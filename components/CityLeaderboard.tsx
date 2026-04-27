@@ -15,15 +15,30 @@ export function CityLeaderboard() {
   const [currentPlayer, setCurrentPlayer] = useState<PlayerProfile | null>(null);
   const [recentReviews, setRecentReviews] = useState<GameReviewRecord[]>([]);
   const adapter = useMemo(() => createLeaderboardAdapter(), []);
+  const [mode, setMode] = useState<"supabase" | "local">("local");
 
   useEffect(() => {
-    startTransition(() => {
-      const player = adapter.getCurrentPlayer();
+    let cancelled = false;
+    async function loadLeaderboard() {
+      const player = await adapter.getCurrentPlayer();
+      const [nextEntries, reviews] = await Promise.all([
+        adapter.getEntries(),
+        adapter.getRecentReviews(),
+      ]);
+      if (cancelled) return;
+      startTransition(() => {
       setCurrentPlayer(player);
       setCity(player?.city ?? "Almaty");
-      setEntries(adapter.getEntries());
-      setRecentReviews(adapter.getRecentReviews());
-    });
+        setEntries(nextEntries);
+        setRecentReviews(reviews);
+        setMode(adapter.mode);
+      });
+    }
+
+    void loadLeaderboard();
+    return () => {
+      cancelled = true;
+    };
   }, [adapter]);
 
   const cityEntries = useMemo(() => entries.filter((player) => city === "Other" ? true : player.city === city), [city, entries]);
@@ -48,7 +63,7 @@ export function CityLeaderboard() {
             <p className="text-sm font-semibold uppercase tracking-[0.3em] text-[var(--gold)]">City ladder</p>
             <h2 className="mt-3 font-[var(--font-display)] text-3xl font-bold">Top players from {city}</h2>
             <p className="mt-2 max-w-xl text-sm text-slate-300">{cityCopy[city]}</p>
-            <p className="mt-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">{getLeaderboardMode()}</p>
+            <p className="mt-2 inline-flex rounded-full border border-white/10 bg-slate-950/45 px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-300">{getLeaderboardMode(mode)}</p>
           </div>
           <Select value={city} onChange={(event) => setCity(event.target.value as City)} className="md:w-56">
             {cities.map((item) => <option key={item}>{item}</option>)}
@@ -69,6 +84,7 @@ export function CityLeaderboard() {
           {cityEntries.map((player, index) => (
             <PlayerRow key={`${player.id}-${player.isDemo ? "demo" : "local"}`} player={player} rank={index + 1} />
           ))}
+          {!cityEntries.length ? <EmptyCityState city={city} /> : null}
         </div>
       </section>
 
@@ -162,11 +178,26 @@ function PlayerRow({ player, rank, compact }: { player: LeaderboardEntry; rank: 
           {player.isPro ? <Crown className="h-4 w-4 text-[var(--gold)]" /> : null}
         </p>
         <p className="mt-1 text-xs text-slate-400">{player.city} · {player.wins}/{player.games} wins · {player.reviews} reviews · coach {player.coachScore}</p>
+        {!compact && player.badges.length ? <BadgeList badges={player.badges.slice(0, 3)} compact /> : null}
       </div>
       <div className="text-right">
         <p className="font-[var(--font-display)] text-xl font-bold">{player.rating}</p>
         <p className="flex items-center justify-end gap-1 text-xs text-[var(--mint)]"><Flame className="h-3.5 w-3.5" /> {player.streak}</p>
       </div>
+    </div>
+  );
+}
+
+function EmptyCityState({ city }: { city: City }) {
+  return (
+    <div className="rounded-[1.25rem] border border-[var(--gold)]/25 bg-[rgba(248,200,106,0.08)] p-5">
+      <p className="font-[var(--font-display)] text-xl font-bold">No live entries in {city} yet.</p>
+      <p className="mt-2 text-sm leading-6 text-slate-300">
+        Create a profile, analyze a game, and this city ladder will start filling with persisted Supabase results.
+      </p>
+      <Button asChild className="mt-4">
+        <Link href="/lobby">Play for this city</Link>
+      </Button>
     </div>
   );
 }

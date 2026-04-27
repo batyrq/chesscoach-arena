@@ -17,7 +17,7 @@ export default function LeaderboardPage() {
               Your city ladder updates after every review.
             </h1>
             <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-300">
-              Demo rivals keep the arena alive, while your local profile, coach score, badges, and recent reviewed games persist in this browser.
+              Live Supabase rankings persist your profile, coach score, badges, and reviewed games, with the local demo ladder still ready when the backend is unavailable.
             </p>
           </div>
           <Card className="p-5">
@@ -26,8 +26,8 @@ export default function LeaderboardPage() {
                 <Database className="h-5 w-5" />
               </div>
               <div>
-                <p className="font-semibold">Local-first, Supabase-ready</p>
-                <p className="text-sm text-slate-400">Works today with localStorage; production adapters can sync players, games, reviews, and leaderboard entries.</p>
+                <p className="font-semibold">Live when configured, local when not</p>
+                <p className="text-sm text-slate-400">Supabase powers the real ladder; localStorage keeps the demo flow resilient.</p>
               </div>
             </div>
           </Card>

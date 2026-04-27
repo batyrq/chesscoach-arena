@@ -39,8 +39,14 @@ export function AnalysisClient({ gameId }: { gameId: string }) {
 
   useEffect(() => {
     if (!analysis || !review || gameId === "demo") return;
-    const update = leaderboard.recordAnalyzedGame({ gameId, analysis, result: review.result });
-    startTransition(() => setLeaderboardUpdate((current) => current && !current.alreadyCounted ? current : update));
+    let cancelled = false;
+    void leaderboard.recordAnalyzedGame({ gameId, analysis, result: review.result, review }).then((update) => {
+      if (cancelled) return;
+      startTransition(() => setLeaderboardUpdate((current) => current && !current.alreadyCounted ? current : update));
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [analysis, gameId, leaderboard, review]);
 
   if (loaded && !review) {
@@ -142,7 +148,7 @@ function RankingUpdateCard({ update }: { update: LeaderboardUpdateResult }) {
   return (
     <Card className="overflow-hidden p-0">
       <div className="relative p-5">
-        <div className="absolute right-0 top-0 h-32 w-32 rounded-full bg-[var(--mint)]/10 blur-2xl" />
+        <div className="pointer-events-none absolute right-0 top-0 h-32 w-32 rounded-full bg-[var(--mint)]/10 blur-2xl" />
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.24em] text-[var(--mint)]">
@@ -156,6 +162,21 @@ function RankingUpdateCard({ update }: { update: LeaderboardUpdateResult }) {
                 ? "Refresh-safe progression is on, so games and reviews do not increment twice for the same analysis."
                 : `${update.player.displayName} gained ${formatDelta(update.ratingChange)} rating and ${formatDelta(update.coachScoreChange)} coach score from this review.`}
             </p>
+            <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold text-slate-300">
+              <span className="rounded-full border border-white/10 bg-slate-950/45 px-3 py-1">
+                {update.adapterMode === "supabase" ? "Live Supabase" : "Local demo"}
+              </span>
+              <span className="rounded-full border border-white/10 bg-slate-950/45 px-3 py-1">
+                Rank {formatRank(update.oldRank)} to {formatRank(update.newRank)}
+              </span>
+              {update.badgesEarned.length ? update.badgesEarned.map((badge) => (
+                <span key={badge} className="rounded-full border border-[var(--gold)]/25 bg-[rgba(248,200,106,0.1)] px-3 py-1 text-[var(--gold)]">
+                  {badge}
+                </span>
+              )) : (
+                <span className="rounded-full border border-white/10 bg-slate-950/45 px-3 py-1">No new badges</span>
+              )}
+            </div>
           </div>
           <Button asChild>
             <Link href="/leaderboard">View City Leaderboard</Link>
@@ -258,6 +279,10 @@ function formatMaterial(score: number) {
 function formatDelta(value: number) {
   if (value === 0) return "+0";
   return value > 0 ? `+${value}` : value.toString();
+}
+
+function formatRank(rank: number | null) {
+  return rank ? `#${rank}` : "unranked";
 }
 
 function Phase({ title, body }: { title: string; body: string }) {
