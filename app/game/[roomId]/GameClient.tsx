@@ -12,7 +12,7 @@ import { PlayerCard } from "@/components/PlayerCard";
 import { ShareRoomButton } from "@/components/ShareRoomButton";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { getBrowserTabToken, getOrCreateRoomPlayerId, loadProfile, saveGameReview, saveRoomPlayerId } from "@/lib/storage";
+import { getBrowserTabToken, getOrCreateRoomPlayerId, loadProfile, saveGameReview, saveProfile, saveRoomPlayerId } from "@/lib/storage";
 import { createMultiplayerAdapter } from "@/lib/multiplayer";
 import type { City, Move, MultiplayerRoomState, Player, RoomRole } from "@/lib/types";
 
@@ -36,6 +36,7 @@ export function GameClient({ roomId }: { roomId: string }) {
     const storedProfile = loadProfile();
     const nextPlayerId = getOrCreateRoomPlayerId(roomId);
     if (!storedProfile) {
+      saveProfile({ name: "Guest Gambiteer", city: "Almaty" });
       startTransition(() => {
         setPlayerId(nextPlayerId);
         setProfileReady(true);

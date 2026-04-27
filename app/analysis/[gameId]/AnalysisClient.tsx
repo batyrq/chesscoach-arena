@@ -10,17 +10,24 @@ import { CoachAnalysisCard } from "@/components/CoachAnalysisCard";
 import { MoveHistory } from "@/components/MoveHistory";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Select } from "@/components/ui/select";
 import { analyzeGameFromMoves } from "@/lib/analysis";
+import type { CoachPersonality, EnhancedCoachReview } from "@/lib/coach-review";
 import { createLeaderboardAdapter } from "@/lib/leaderboard";
 import { loadGameReview } from "@/lib/storage";
 import type { LeaderboardUpdateResult, MoveEvaluation } from "@/lib/types";
 
 const demoPgn = "1. e4 e5 2. Nf3 Nc6 3. Bc4 Bc5 4. c3 Nf6 5. d4 exd4 6. e5 d5 7. exf6 dxc4 8. fxg7 Rg8";
 type ReviewState = NonNullable<ReturnType<typeof loadGameReview>>;
+const coachPersonalities: CoachPersonality[] = ["Friendly Coach", "Strict Coach", "BigTech Interview Coach", "Meme Coach"];
 
 export function AnalysisClient({ gameId }: { gameId: string }) {
   const [review, setReview] = useState<ReviewState | null>(null);
   const [leaderboardUpdate, setLeaderboardUpdate] = useState<LeaderboardUpdateResult | null>(null);
+  const [personality, setPersonality] = useState<CoachPersonality>("Friendly Coach");
+  const [enhancedReview, setEnhancedReview] = useState<EnhancedCoachReview | null>(null);
+  const [enhancedLoading, setEnhancedLoading] = useState(false);
+  const [enhancedError, setEnhancedError] = useState("");
   const [loaded, setLoaded] = useState(false);
   const leaderboard = useMemo(() => createLeaderboardAdapter(), []);
 
@@ -48,6 +55,97 @@ export function AnalysisClient({ gameId }: { gameId: string }) {
       cancelled = true;
     };
   }, [analysis, gameId, leaderboard, review]);
+
+  useEffect(() => {
+    if (!analysis || !review || gameId === "demo") return;
+    const local = loadEnhancedCoachReview(gameId);
+    if (local) {
+      startTransition(() => setEnhancedReview(local));
+      return;
+    }
+
+    let cancelled = false;
+    void fetch("/api/coach-review", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        gameId,
+        pgn: review.pgn,
+        fen: review.fen,
+        moves: review.moves,
+        analysis,
+        player: {
+          city: leaderboardUpdate?.player.city,
+          rank: leaderboardUpdate?.newRank ?? leaderboardUpdate?.cityRank,
+        },
+        playerId: leaderboardUpdate?.player.playerId,
+        personality,
+        loadExistingOnly: true,
+      }),
+    })
+      .then((response) => response.ok ? response.json() : null)
+      .then((payload: { review?: EnhancedCoachReview | null } | null) => {
+        if (cancelled || !payload?.review) return;
+        saveEnhancedCoachReview(gameId, payload.review);
+        startTransition(() => setEnhancedReview(payload.review ?? null));
+      })
+      .catch(() => undefined);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [analysis, gameId, leaderboardUpdate, personality, review]);
+
+  useEffect(() => {
+    if (!analysis || !enhancedReview || !leaderboardUpdate || gameId === "demo") return;
+
+    void fetch("/api/coach-review", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        gameId,
+        analysis,
+        playerId: leaderboardUpdate.player.playerId,
+        enhancedReview,
+      }),
+    }).catch(() => undefined);
+  }, [analysis, enhancedReview, gameId, leaderboardUpdate]);
+
+  async function generateEnhancedReview() {
+    if (!analysis || !review) return;
+    setEnhancedLoading(true);
+    setEnhancedError("");
+
+    try {
+      const response = await fetch("/api/coach-review", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          gameId,
+          pgn: review.pgn,
+          fen: review.fen,
+          moves: review.moves,
+          analysis,
+          player: {
+            city: leaderboardUpdate?.player.city,
+            rank: leaderboardUpdate?.newRank ?? leaderboardUpdate?.cityRank,
+          },
+          playerId: leaderboardUpdate?.player.playerId,
+          personality,
+        }),
+      });
+
+      if (!response.ok) throw new Error("Coach review request failed");
+      const payload = await response.json() as { review?: EnhancedCoachReview };
+      if (!payload.review) throw new Error("Coach review response was empty");
+      saveEnhancedCoachReview(gameId, payload.review);
+      startTransition(() => setEnhancedReview(payload.review ?? null));
+    } catch {
+      setEnhancedError("The deeper coach review is using the reliable fallback path.");
+    } finally {
+      setEnhancedLoading(false);
+    }
+  }
 
   if (loaded && !review) {
     return (
@@ -103,6 +201,16 @@ export function AnalysisClient({ gameId }: { gameId: string }) {
         </section>
         <section className="space-y-5">
           {analysis ? <CoachAnalysisCard analysis={analysis} /> : <Card className="h-96 animate-pulse" />}
+          {analysis ? (
+            <EnhancedCoachPanel
+              review={enhancedReview}
+              loading={enhancedLoading}
+              error={enhancedError}
+              personality={personality}
+              onPersonalityChange={setPersonality}
+              onGenerate={() => void generateEnhancedReview()}
+            />
+          ) : null}
           {leaderboardUpdate ? <RankingUpdateCard update={leaderboardUpdate} /> : null}
           {analysis ? (
             <>
@@ -141,6 +249,110 @@ export function AnalysisClient({ gameId }: { gameId: string }) {
         </section>
       </main>
     </AppShell>
+  );
+}
+
+function EnhancedCoachPanel({
+  review,
+  loading,
+  error,
+  personality,
+  onPersonalityChange,
+  onGenerate,
+}: {
+  review: EnhancedCoachReview | null;
+  loading: boolean;
+  error: string;
+  personality: CoachPersonality;
+  onPersonalityChange: (personality: CoachPersonality) => void;
+  onGenerate: () => void;
+}) {
+  const [answerVisible, setAnswerVisible] = useState(false);
+
+  return (
+    <Card className="overflow-hidden p-0">
+      <div className="relative p-5">
+        <div className="pointer-events-none absolute right-0 top-0 h-40 w-40 rounded-full bg-[var(--gold)]/10 blur-2xl" />
+        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.25em] text-[var(--gold)]">Deeper AI Coach</p>
+            <h2 className="mt-2 font-[var(--font-display)] text-2xl font-bold">Blunder-to-puzzle review</h2>
+            <p className="mt-2 max-w-xl text-sm leading-6 text-slate-300">
+              Generate a richer coach note from the engine-lite facts, then save the puzzle with this review.
+            </p>
+          </div>
+          <span className="w-fit rounded-full border border-white/10 bg-slate-950/50 px-3 py-1 text-xs font-semibold text-slate-200">
+            {review?.provider === "gemini" ? "Gemini AI Coach" : "Engine-lite fallback"}
+          </span>
+        </div>
+
+        <div className="mt-5 grid gap-3 sm:grid-cols-[1fr_auto]">
+          <Select value={personality} onChange={(event) => onPersonalityChange(event.target.value as CoachPersonality)}>
+            {coachPersonalities.map((item) => <option key={item}>{item}</option>)}
+          </Select>
+          <Button onClick={onGenerate} disabled={loading}>
+            <Sparkles className="h-4 w-4" /> {loading ? "Reviewing..." : "Generate deeper AI review"}
+          </Button>
+        </div>
+
+        {error ? <p className="mt-3 text-sm text-[var(--gold)]">{error}</p> : null}
+
+        {review ? (
+          <div className="mt-5 space-y-4">
+            <div className="rounded-[1.25rem] border border-[var(--mint)]/25 bg-[rgba(118,247,203,0.08)] p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--mint)]">Shareable headline</p>
+              <p className="mt-2 font-[var(--font-display)] text-xl font-bold">{review.shareHeadline}</p>
+              <p className="mt-2 text-sm leading-6 text-slate-300">{review.summary}</p>
+            </div>
+            <div className="grid gap-3 md:grid-cols-2">
+              <CoachTextBlock title="Biggest mistake" body={review.biggestMistakeExplanation} tone="danger" />
+              <CoachTextBlock title="Better move" body={review.betterMoveExplanation} />
+            </div>
+            <div className="rounded-[1.25rem] border border-white/10 bg-white/[0.04] p-4">
+              <p className="font-semibold text-white">Personalized tips</p>
+              <ul className="mt-3 grid gap-2 text-sm text-slate-300">
+                {review.trainingTips.map((tip, index) => (
+                  <li key={`${index}-${tip}`} className="rounded-2xl border border-white/10 bg-slate-950/35 p-3">{tip}</li>
+                ))}
+              </ul>
+            </div>
+            <div className="grid gap-3 md:grid-cols-3">
+              <Phase title="Opening" body={review.phaseAdvice.opening} />
+              <Phase title="Middlegame" body={review.phaseAdvice.middlegame} />
+              <Phase title="Endgame" body={review.phaseAdvice.endgame} />
+            </div>
+            <CoachTextBlock title="Training drill" body={review.trainingDrill} />
+            <div className="rounded-[1.25rem] border border-[var(--gold)]/30 bg-[rgba(248,200,106,0.08)] p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--gold)]">Find the better move</p>
+              {review.puzzle.fen ? <p className="mt-2 break-all rounded-xl bg-slate-950/45 p-3 text-xs text-slate-400">FEN: {review.puzzle.fen}</p> : null}
+              <p className="mt-3 text-sm leading-6 text-slate-200">{review.puzzle.question}</p>
+              {answerVisible ? (
+                <div className="mt-3 rounded-xl border border-white/10 bg-slate-950/45 p-3 text-sm text-slate-300">
+                  <p className="font-semibold text-white">Answer: {review.puzzle.answerMove}</p>
+                  <p className="mt-1 leading-6">{review.puzzle.explanation}</p>
+                </div>
+              ) : null}
+              <Button className="mt-4" variant="secondary" onClick={() => setAnswerVisible((value) => !value)}>
+                {answerVisible ? "Hide answer" : "Reveal answer"}
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="mt-5 rounded-[1.25rem] border border-white/10 bg-white/[0.04] p-4 text-sm leading-6 text-slate-300">
+            Engine-lite has already produced the baseline review. Generate the deeper version to create a saved coach note and puzzle.
+          </div>
+        )}
+      </div>
+    </Card>
+  );
+}
+
+function CoachTextBlock({ title, body, tone = "default" }: { title: string; body: string; tone?: "default" | "danger" }) {
+  return (
+    <div className={`rounded-[1.25rem] border p-4 ${tone === "danger" ? "border-[var(--coral)]/30 bg-[rgba(255,127,127,0.08)]" : "border-white/10 bg-white/[0.04]"}`}>
+      <p className="font-semibold text-white">{title}</p>
+      <p className="mt-2 text-sm leading-6 text-slate-300">{body}</p>
+    </div>
   );
 }
 
@@ -283,6 +495,27 @@ function formatDelta(value: number) {
 
 function formatRank(rank: number | null) {
   return rank ? `#${rank}` : "unranked";
+}
+
+function loadEnhancedCoachReview(gameId: string) {
+  if (typeof window === "undefined") return null;
+  const raw = window.localStorage.getItem(getEnhancedReviewKey(gameId));
+  if (!raw) return null;
+
+  try {
+    return JSON.parse(raw) as EnhancedCoachReview;
+  } catch {
+    return null;
+  }
+}
+
+function saveEnhancedCoachReview(gameId: string, review: EnhancedCoachReview) {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(getEnhancedReviewKey(gameId), JSON.stringify(review));
+}
+
+function getEnhancedReviewKey(gameId: string) {
+  return `chesscoach.enhancedReview.${gameId}`;
 }
 
 function Phase({ title, body }: { title: string; body: string }) {
