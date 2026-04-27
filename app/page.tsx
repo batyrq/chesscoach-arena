@@ -44,8 +44,8 @@ export default function LandingPage() {
               <Button asChild href="/lobby" size="lg">
                 Start Game <ArrowRight className="h-4 w-4" />
               </Button>
-              <Button asChild href="/lobby?mode=friend" variant="secondary" size="lg">
-                Play with Friend
+              <Button asChild href="/pro" variant="secondary" size="lg">
+                See Pro Demo
               </Button>
             </div>
             <p className="mt-4 text-sm text-slate-400">
@@ -114,12 +114,17 @@ export default function LandingPage() {
             <p className="text-sm font-semibold uppercase tracking-[0.3em] text-[var(--gold)]">Monetization ready</p>
             <h2 className="mt-3 font-[var(--font-display)] text-3xl font-bold">Free gets players hooked. Pro makes the training loop serious.</h2>
             <div className="mt-5 grid gap-3 text-sm text-slate-300 sm:grid-cols-3">
-              <span className="rounded-2xl bg-white/[0.06] p-3"><Zap className="mb-2 h-4 w-4 text-[var(--mint)]" /> Unlimited reviews</span>
-              <span className="rounded-2xl bg-white/[0.06] p-3"><ShieldCheck className="mb-2 h-4 w-4 text-[var(--gold)]" /> City champion badge</span>
-              <span className="rounded-2xl bg-white/[0.06] p-3"><Brush className="mb-2 h-4 w-4 text-[var(--blue)]" /> Premium board skins</span>
+              <span className="rounded-2xl bg-white/[0.06] p-3"><Zap className="mb-2 h-4 w-4 text-[var(--mint)]" /> Deeper AI Coach</span>
+              <span className="rounded-2xl bg-white/[0.06] p-3"><ShieldCheck className="mb-2 h-4 w-4 text-[var(--gold)]" /> Blunder puzzles</span>
+              <span className="rounded-2xl bg-white/[0.06] p-3"><Brush className="mb-2 h-4 w-4 text-[var(--blue)]" /> Founder badge</span>
             </div>
           </div>
-          <ProUpgradeModal />
+          <div className="flex flex-wrap gap-3">
+            <Button asChild size="lg">
+              <Link href="/pro">Open demo checkout</Link>
+            </Button>
+            <ProUpgradeModal />
+          </div>
         </section>
       </main>
     </AppShell>

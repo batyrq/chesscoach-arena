@@ -121,6 +121,11 @@ function CurrentPlayerCard({ player, rank }: { player: PlayerProfile; rank: numb
           </p>
           <h3 className="mt-2 font-[var(--font-display)] text-3xl font-black">{rank ? `#${rank}` : "Unranked"} · {player.displayName}</h3>
           <p className="mt-2 text-sm text-slate-300">{player.games} games · {player.reviews} AI reviews · {player.wins}-{player.losses}-{player.draws}</p>
+          {player.isPro ? (
+            <p className="mt-3 inline-flex items-center gap-2 rounded-full border border-[var(--gold)]/35 bg-[rgba(248,200,106,0.12)] px-3 py-1 text-xs font-semibold text-[var(--gold)]">
+              <Crown className="h-3.5 w-3.5" /> Founder Pro
+            </p>
+          ) : null}
         </div>
         <div className="grid grid-cols-2 gap-3 text-center sm:grid-cols-3">
           <MiniStat label="Rating" value={player.rating.toString()} />

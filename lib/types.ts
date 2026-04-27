@@ -131,6 +131,7 @@ export type PlayerProfile = {
   coachScore: number;
   lastPlayedAt: string | null;
   badges: Badge[];
+  isPro?: boolean;
 };
 
 export type GameReviewRecord = {

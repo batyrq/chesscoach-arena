@@ -3,7 +3,8 @@
 import { startTransition, Suspense, useEffect, useMemo, useState } from "react";
 import type React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Bot, Link2, MapPin, MonitorPlay, Sparkles, Trophy } from "lucide-react";
+import Link from "next/link";
+import { Bot, Crown, Link2, MapPin, MonitorPlay, Sparkles, Trophy } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,9 +12,12 @@ import { Select } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
 import { cities } from "@/lib/demo-data";
 import { createLeaderboardAdapter } from "@/lib/leaderboard";
+import { loadProStatus, type ProStatus } from "@/lib/pro";
 import type { City, PlayerProfile } from "@/lib/types";
 import { loadProfile, saveProfile } from "@/lib/storage";
 import { shortRoomCode } from "@/lib/utils";
+
+const initialProStatus: ProStatus = { isPro: false, status: "free", plan: "free", provider: "local" };
 
 export default function LobbyPage() {
   return (
@@ -33,6 +37,7 @@ function LobbyContent() {
   const [profileHydrated, setProfileHydrated] = useState(false);
   const leaderboard = useMemo(() => createLeaderboardAdapter(), []);
   const [leaderboardMode, setLeaderboardMode] = useState<"supabase" | "local">("local");
+  const [proStatus, setProStatus] = useState<ProStatus>(initialProStatus);
   const friendMode = searchParams.get("mode") === "friend";
 
   useEffect(() => {
@@ -45,6 +50,7 @@ function LobbyContent() {
     startTransition(() => {
       setName(profile.name);
       setCity(profile.city);
+      setProStatus(loadProStatus());
       setProfileHydrated(true);
     });
     void leaderboard.getCurrentPlayer().then((player) => {
@@ -120,6 +126,11 @@ function LobbyContent() {
             <OnboardingProof icon={<Sparkles className="h-4 w-4" />} label="Coach loop" value="Instant review" />
             <OnboardingProof icon={<Trophy className="h-4 w-4" />} label="Goal" value="Climb local rank" />
           </div>
+          {proStatus.isPro ? (
+            <p className="mt-5 inline-flex items-center gap-2 rounded-full border border-[var(--gold)]/35 bg-[rgba(248,200,106,0.1)] px-4 py-2 text-sm font-semibold text-[var(--gold)]">
+              <Crown className="h-4 w-4" /> Founder Pro active
+            </p>
+          ) : null}
         </div>
         <Card className="p-6 md:p-8">
           <div className="grid gap-5">
@@ -150,6 +161,21 @@ function LobbyContent() {
               </div>
             </div>
             <CityRankPreview profile={playerProfile} city={city} mode={leaderboardMode} />
+            <div className="rounded-[1.5rem] border border-[var(--gold)]/25 bg-[rgba(248,200,106,0.08)] p-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="flex items-center gap-2 text-sm font-semibold text-white">
+                    <Crown className="h-4 w-4 text-[var(--gold)]" /> {proStatus.isPro ? "Founder Pro ready" : "Pro demo upgrade"}
+                  </p>
+                  <p className="mt-1 text-sm leading-6 text-slate-300">
+                    {proStatus.isPro ? "Your deeper coach and puzzle features are framed as Pro-level demo value." : "Unlock the polished demo checkout, Pro badge, shareable coach summary, and blunder puzzles."}
+                  </p>
+                </div>
+                <Button asChild variant="secondary" className="shrink-0">
+                  <Link href="/pro">{proStatus.isPro ? "View Pro" : "Upgrade demo"}</Link>
+                </Button>
+              </div>
+            </div>
             <div className="rounded-[1.5rem] border border-white/10 bg-white/[0.04] p-4">
               <p className="mb-3 text-sm font-semibold">Join Room by Code</p>
               <div className="flex flex-col gap-3 sm:flex-row">
@@ -161,7 +187,7 @@ function LobbyContent() {
             </div>
             <div className="flex items-start gap-3 rounded-[1.5rem] bg-[rgba(118,247,203,0.08)] p-4 text-sm text-slate-300">
               <Bot className="mt-0.5 h-5 w-5 shrink-0 text-[var(--mint)]" />
-              Multiplayer note: room links are demo-local today, with the Supabase schema stub ready for realtime persistence.
+              Multiplayer note: friend rooms use Supabase Realtime when configured and fall back to the local demo channel when needed.
             </div>
           </div>
         </Card>

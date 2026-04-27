@@ -1,4 +1,5 @@
 import { leaderboardPlayers } from "@/lib/demo-data";
+import { isProStatus, loadProStatus } from "@/lib/pro";
 import { getBrowserSupabaseClient } from "@/lib/supabase/client";
 import { getOrCreateLocalPlayerId, loadProfile, type StoredGameReview } from "@/lib/storage";
 import type {
@@ -84,7 +85,7 @@ export class LocalLeaderboardAdapter implements LeaderboardAdapter {
     const players = readPlayers();
     const existing = players[profile.playerId];
     const next = existing
-      ? { ...existing, displayName: profile.name, city: profile.city }
+      ? { ...existing, displayName: profile.name, city: profile.city, isPro: existing.isPro || loadProStatus().isPro }
       : createPlayerProfile(profile.playerId, profile.name, profile.city);
 
     writePlayers({ ...players, [next.playerId]: next });
@@ -121,7 +122,7 @@ export class LocalLeaderboardAdapter implements LeaderboardAdapter {
     return readPlayers()[playerId]?.badges ?? [];
   }
 
-  async recordAnalyzedGame(input: RecordReviewInput) {
+  async recordAnalyzedGame(input: RecordReviewInput): Promise<LeaderboardUpdateResult | null> {
     const current = await this.getCurrentPlayer();
     if (!current) return null;
 
@@ -259,7 +260,7 @@ export class SupabaseLeaderboardAdapter implements LeaderboardAdapter {
           rank: 0,
           isCurrentPlayer: current?.playerId === row.player_id,
           isDemo: false,
-          isPro: profile?.pro_status === "pro",
+          isPro: isProStatus(profile?.pro_status),
           streak: Math.min(9, Math.max(1, row.reviews ?? 0)),
         } satisfies LeaderboardEntry;
       });
@@ -314,7 +315,7 @@ export class SupabaseLeaderboardAdapter implements LeaderboardAdapter {
     }, () => this.fallback.getBadges(playerId));
   }
 
-  async recordAnalyzedGame(input: RecordReviewInput) {
+  async recordAnalyzedGame(input: RecordReviewInput): Promise<LeaderboardUpdateResult | null> {
     return this.withFallback(async (client) => {
       const current = await this.upsertCurrentPlayer(client);
       if (!current) return null;
@@ -426,7 +427,7 @@ export class SupabaseLeaderboardAdapter implements LeaderboardAdapter {
 
     const player = rowToPlayerProfile(data as SupabasePlayerRow, fallbackProfile.badges);
     const badges = await this.getBadgesForClient(client, player.playerId);
-    const hydrated = { ...player, badges };
+    const hydrated = { ...player, badges, isPro: player.isPro || loadProStatus().isPro };
     await this.saveLeaderboardEntry(client, hydrated);
     return hydrated;
   }
@@ -677,6 +678,7 @@ function createPlayerProfile(playerId: string, displayName: string, city: City):
     coachScore: 50,
     lastPlayedAt: null,
     badges: [],
+    isPro: loadProStatus().isPro,
   };
 }
 
@@ -694,6 +696,7 @@ function rowToPlayerProfile(row: SupabasePlayerRow, badges: Badge[] = []): Playe
     coachScore: row.coach_score ?? 50,
     lastPlayedAt: row.updated_at,
     badges,
+    isPro: isProStatus(row.pro_status),
   };
 }
 

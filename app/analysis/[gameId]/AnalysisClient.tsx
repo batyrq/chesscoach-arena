@@ -3,7 +3,7 @@
 import { startTransition, useEffect, useMemo, useState } from "react";
 import { Chess } from "chess.js";
 import Link from "next/link";
-import { ArrowLeft, BarChart3, ChevronRight, Medal, Sparkles, Trophy } from "lucide-react";
+import { ArrowLeft, BarChart3, ChevronRight, Crown, Medal, Sparkles, Trophy } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { ChessBoardPanel } from "@/components/ChessBoardPanel";
 import { CoachAnalysisCard } from "@/components/CoachAnalysisCard";
@@ -14,12 +14,14 @@ import { Select } from "@/components/ui/select";
 import { analyzeGameFromMoves } from "@/lib/analysis";
 import type { CoachPersonality, EnhancedCoachReview } from "@/lib/coach-review";
 import { createLeaderboardAdapter } from "@/lib/leaderboard";
+import { loadProStatus, type ProStatus } from "@/lib/pro";
 import { loadGameReview } from "@/lib/storage";
 import type { LeaderboardUpdateResult, MoveEvaluation } from "@/lib/types";
 
 const demoPgn = "1. e4 e5 2. Nf3 Nc6 3. Bc4 Bc5 4. c3 Nf6 5. d4 exd4 6. e5 d5 7. exf6 dxc4 8. fxg7 Rg8";
 type ReviewState = NonNullable<ReturnType<typeof loadGameReview>>;
 const coachPersonalities: CoachPersonality[] = ["Friendly Coach", "Strict Coach", "BigTech Interview Coach", "Meme Coach"];
+const initialProStatus: ProStatus = { isPro: false, status: "free", plan: "free", provider: "local" };
 
 export function AnalysisClient({ gameId }: { gameId: string }) {
   const [review, setReview] = useState<ReviewState | null>(null);
@@ -28,6 +30,7 @@ export function AnalysisClient({ gameId }: { gameId: string }) {
   const [enhancedReview, setEnhancedReview] = useState<EnhancedCoachReview | null>(null);
   const [enhancedLoading, setEnhancedLoading] = useState(false);
   const [enhancedError, setEnhancedError] = useState("");
+  const [proStatus, setProStatus] = useState<ProStatus>(initialProStatus);
   const [loaded, setLoaded] = useState(false);
   const leaderboard = useMemo(() => createLeaderboardAdapter(), []);
 
@@ -35,6 +38,7 @@ export function AnalysisClient({ gameId }: { gameId: string }) {
     const storedReview = loadGameReview(gameId);
     startTransition(() => {
       setReview(storedReview ?? (gameId === "demo" ? createDemoReview() : null));
+      setProStatus(loadProStatus());
       setLoaded(true);
     });
   }, [gameId]);
@@ -209,6 +213,7 @@ export function AnalysisClient({ gameId }: { gameId: string }) {
               personality={personality}
               onPersonalityChange={setPersonality}
               onGenerate={() => void generateEnhancedReview()}
+              proActive={proStatus.isPro}
             />
           ) : null}
           {leaderboardUpdate ? <RankingUpdateCard update={leaderboardUpdate} /> : null}
@@ -259,6 +264,7 @@ function EnhancedCoachPanel({
   personality,
   onPersonalityChange,
   onGenerate,
+  proActive,
 }: {
   review: EnhancedCoachReview | null;
   loading: boolean;
@@ -266,6 +272,7 @@ function EnhancedCoachPanel({
   personality: CoachPersonality;
   onPersonalityChange: (personality: CoachPersonality) => void;
   onGenerate: () => void;
+  proActive: boolean;
 }) {
   const [answerVisible, setAnswerVisible] = useState(false);
 
@@ -284,6 +291,17 @@ function EnhancedCoachPanel({
           <span className="w-fit rounded-full border border-white/10 bg-slate-950/50 px-3 py-1 text-xs font-semibold text-slate-200">
             {review?.provider === "gemini" ? "Gemini AI Coach" : "Engine-lite fallback"}
           </span>
+        </div>
+
+        <div className="mt-4 flex flex-wrap items-center gap-2 text-xs font-semibold">
+          <span className="inline-flex items-center gap-1 rounded-full border border-[var(--gold)]/30 bg-[rgba(248,200,106,0.1)] px-3 py-1 text-[var(--gold)]">
+            <Crown className="h-3.5 w-3.5" /> {proActive ? "Founder Pro active" : "Pro-level demo feature"}
+          </span>
+          {!proActive ? (
+            <Link href="/pro" className="rounded-full border border-white/10 bg-slate-950/45 px-3 py-1 text-slate-300 transition hover:text-white">
+              Upgrade demo
+            </Link>
+          ) : null}
         </div>
 
         <div className="mt-5 grid gap-3 sm:grid-cols-[1fr_auto]">
