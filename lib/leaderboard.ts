@@ -43,6 +43,11 @@ type SupabasePlayerRow = {
   updated_at: string | null;
 };
 
+type PublicPlayerMeta = {
+  authUserId?: string | null;
+  guestId?: string | null;
+};
+
 type SupabaseLeaderboardRow = {
   id: string;
   player_id: string;
@@ -96,21 +101,27 @@ export class LocalLeaderboardAdapter implements LeaderboardAdapter {
   async getEntries() {
     const current = await this.getCurrentPlayer();
     const localPlayers = Object.values(readPlayers());
-    const demoEntries = getDemoEntries(current);
-    const localEntries: LeaderboardEntry[] = localPlayers.map((player) => ({
-      ...player,
-      id: player.playerId,
-      name: player.displayName,
-      rank: 0,
-      isCurrentPlayer: current?.playerId === player.playerId,
-      streak: Math.min(9, Math.max(1, player.reviews)),
-    }));
+    const localEntries: LeaderboardEntry[] = localPlayers
+      .filter((player) => shouldShowPublicPlayer(player, {
+        isCurrentPlayer: current?.playerId === player.playerId,
+        authUserId: null,
+        guestId: player.playerId,
+      }))
+      .map((player) => ({
+        ...player,
+        id: player.playerId,
+        name: player.displayName,
+        rank: 0,
+        isCurrentPlayer: current?.playerId === player.playerId,
+        streak: Math.min(9, Math.max(1, player.reviews)),
+      }));
 
-    return rankEntries([...demoEntries, ...localEntries]);
+    return rankEntries(withCuratedFallback(localEntries, current));
   }
 
   async getRecentReviews(limit = 6) {
     return readReviews()
+      .filter((review) => !isSuspiciousPlayerName(review.displayName))
       .sort((a, b) => new Date(b.reviewedAt).getTime() - new Date(a.reviewedAt).getTime())
       .slice(0, limit);
   }
@@ -264,9 +275,16 @@ export class SupabaseLeaderboardAdapter implements LeaderboardAdapter {
           isPro: isProStatus(profile?.pro_status),
           streak: Math.min(9, Math.max(1, row.reviews ?? 0)),
         } satisfies LeaderboardEntry;
+      }).filter((entry) => {
+        const profile = profileById.get(entry.playerId);
+        return shouldShowPublicPlayer(entry, {
+          isCurrentPlayer: entry.isCurrentPlayer,
+          authUserId: profile?.auth_user_id,
+          guestId: profile?.guest_id,
+        });
       });
 
-      return rankEntries(entries);
+      return rankEntries(withCuratedFallback(entries, current));
     }, () => this.fallback.getEntries());
   }
 
@@ -285,7 +303,7 @@ export class SupabaseLeaderboardAdapter implements LeaderboardAdapter {
       const players = await this.fetchPlayers(client, playerIds);
       const playerById = new Map(players.map((player) => [player.id, player]));
 
-      return rows.map((row) => {
+      return rows.map((row): GameReviewRecord => {
         const player = playerById.get(row.player_id);
         return {
           gameId: row.game_id,
@@ -301,7 +319,7 @@ export class SupabaseLeaderboardAdapter implements LeaderboardAdapter {
           reviewedAt: row.created_at ?? new Date().toISOString(),
           summary: row.ai_review?.summary ?? "AI Coach review saved.",
         };
-      });
+      }).filter((review) => !isSuspiciousPlayerName(review.displayName));
     }, () => this.fallback.getRecentReviews(limit));
   }
 
@@ -441,7 +459,7 @@ export class SupabaseLeaderboardAdapter implements LeaderboardAdapter {
         const player = rowToPlayerProfile(data as SupabasePlayerRow, fallbackProfile.badges);
         const badges = await this.getBadgesForClient(client, player.playerId);
         const hydrated = { ...player, badges, isPro: player.isPro || loadProStatus().isPro };
-        await this.saveLeaderboardEntry(client, hydrated);
+        if (shouldPersistPublicEntry(hydrated, Boolean(authUserId))) await this.saveLeaderboardEntry(client, hydrated);
         return hydrated;
       }
     }
@@ -464,7 +482,7 @@ export class SupabaseLeaderboardAdapter implements LeaderboardAdapter {
         const player = rowToPlayerProfile(data as SupabasePlayerRow, fallbackProfile.badges);
         const badges = await this.getBadgesForClient(client, player.playerId);
         const hydrated = { ...player, badges, isPro: player.isPro || loadProStatus().isPro };
-        await this.saveLeaderboardEntry(client, hydrated);
+        if (shouldPersistPublicEntry(hydrated, Boolean(authUserId))) await this.saveLeaderboardEntry(client, hydrated);
         return hydrated;
       }
     }
@@ -485,7 +503,7 @@ export class SupabaseLeaderboardAdapter implements LeaderboardAdapter {
     const player = rowToPlayerProfile(data as SupabasePlayerRow, fallbackProfile.badges);
     const badges = await this.getBadgesForClient(client, player.playerId);
     const hydrated = { ...player, badges, isPro: player.isPro || loadProStatus().isPro };
-    await this.saveLeaderboardEntry(client, hydrated);
+    if (shouldPersistPublicEntry(hydrated, Boolean(authUserId))) await this.saveLeaderboardEntry(client, hydrated);
     return hydrated;
   }
 
@@ -792,18 +810,63 @@ function getDemoEntries(current: PlayerProfile | null): LeaderboardEntry[] {
   }));
 }
 
+function withCuratedFallback(entries: LeaderboardEntry[], current: PlayerProfile | null) {
+  const realEntries = entries.filter((entry) => !entry.isDemo);
+  const realCountByCity = new Map<City, number>();
+  for (const entry of realEntries) {
+    realCountByCity.set(entry.city, (realCountByCity.get(entry.city) ?? 0) + 1);
+  }
+
+  const needsGlobalFallback = realEntries.length < leaderboardPlayers.length;
+  const demoEntries = getDemoEntries(current).filter((entry) => (
+    needsGlobalFallback || (realCountByCity.get(entry.city) ?? 0) < 3
+  ));
+
+  return [...demoEntries, ...entries, ...(current ? [toEntry(current, true)] : [])];
+}
+
 function rankEntries(entries: LeaderboardEntry[]) {
   const byPlayer = new Map<string, LeaderboardEntry>();
   for (const entry of entries) {
-    const existing = byPlayer.get(entry.playerId);
+    const key = entry.isCurrentPlayer ? entry.playerId : normalizedPlayerName(entry.displayName || entry.name);
+    const existing = byPlayer.get(key);
     if (!existing || entry.isCurrentPlayer || (!entry.isDemo && existing.isDemo)) {
-      byPlayer.set(entry.playerId, entry);
+      byPlayer.set(key, entry);
     }
   }
 
   return [...byPlayer.values()]
     .sort((a, b) => b.rating - a.rating || b.coachScore - a.coachScore || b.reviews - a.reviews)
     .map((entry, index) => ({ ...entry, rank: index + 1 }));
+}
+
+function shouldPersistPublicEntry(player: PlayerProfile, signedIn: boolean) {
+  if (signedIn) return true;
+  return player.reviews > 0 || player.games > 0 || Boolean(player.isPro);
+}
+
+function shouldShowPublicPlayer(player: PlayerProfile | LeaderboardEntry, options: PublicPlayerMeta & { isCurrentPlayer?: boolean }) {
+  if (options.isCurrentPlayer) return true;
+  if (isSuspiciousPlayerName(player.displayName)) return false;
+  if (options.authUserId) return true;
+  if (player.reviews > 0 || player.games > 0) return true;
+  return !isTemporaryGuestId(options.guestId) && !isTemporaryGuestId(player.playerId);
+}
+
+function isTemporaryGuestId(value: string | null | undefined) {
+  if (!value) return false;
+  return /^(local-|player-|guest-|demo-)/i.test(value);
+}
+
+function isSuspiciousPlayerName(name: string) {
+  const normalized = normalizedPlayerName(name);
+  if (!normalized) return true;
+  if (/^(guest gambiteer|guest gambitee|p1|p1 white)$/.test(normalized)) return true;
+  return /\b(codex|qa|phase|local|test user|test|demo)\b/.test(normalized);
+}
+
+function normalizedPlayerName(name: string) {
+  return name.trim().toLowerCase().replace(/\s+/g, " ");
 }
 
 function rankFor(entries: LeaderboardEntry[], playerId: string, city: City) {

@@ -133,7 +133,7 @@ export function CityLeaderboard() {
             {visibleEntries.map((player) => (
               <PlayerRow key={`${player.id}-${player.isDemo ? "seed" : "ranked"}`} player={player} rank={player.rank} />
             ))}
-            {!visibleEntries.length ? <EmptyCityState city={city} /> : null}
+            {!visibleEntries.length ? <EmptyCityState /> : null}
           </div>
         </div>
       </section>
@@ -336,15 +336,15 @@ function CompactPlayer({ player, rank }: { player: LeaderboardEntry; rank: numbe
   );
 }
 
-function EmptyCityState({ city }: { city: CityFilter }) {
+function EmptyCityState() {
   const { t, locale } = useI18n();
   const ru = locale === "ru";
   return (
     <div className="p-5">
       <div className="rounded-lg border border-[var(--gold)]/25 bg-[rgba(214,173,99,0.08)] p-5">
-        <p className="font-[var(--font-display)] text-xl font-bold">{ru ? "Станьте первым игроком на этой доске." : "Be the first player on this city board."}</p>
+        <p className="font-[var(--font-display)] text-xl font-bold">{ru ? "Станьте первым игроком в этом городе." : "Be the first player in this city."}</p>
         <p className="mt-2 text-sm leading-6 text-slate-300">
-          {ru ? "Сыграйте партию, откройте разбор, и ваш рейтинг появится здесь" : "Play a game, run your Game Review, and your arena score will appear here"}{city === "All Cities" ? "." : ` ${ru ? "для" : "for"} ${city}.`}
+          {ru ? "Сыграйте партию и разберите её, чтобы попасть в рейтинг." : "Play and review a game to enter the rankings."}
         </p>
         <Button asChild className="mt-4">
           <Link href="/lobby">{t("startGame")}</Link>
@@ -445,7 +445,7 @@ function displayPlayerName(player: Pick<LeaderboardEntry, "name" | "rank" | "isC
 }
 
 function sanitizeDemoName(name: string, index = 1) {
-  if (!/(codex|qa|phase|test user|local)/i.test(name)) return name;
-  const names = ["Amina N.", "Nursultan K.", "Gordon R.", "Timur S.", "Alina B.", "Miras A.", "Dana K.", "Dias M."];
+  if (!/(guest gambiteer|guest gambitee|^p1$|p1 white|codex|qa|phase|test user|local|test|demo)/i.test(name)) return name;
+  const names = ["Aruzhan S.", "Nursultan K.", "Dana K.", "Dias M.", "Amina N.", "Timur S.", "Miras A.", "Alina B."];
   return names[Math.abs(index - 1) % names.length];
 }
