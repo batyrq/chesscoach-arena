@@ -25,7 +25,8 @@ const coachPersonalities: CoachPersonality[] = ["Friendly Coach", "Strict Coach"
 const initialProStatus: ProStatus = { isPro: false, status: "free", plan: "free", provider: "local" };
 
 export function AnalysisClient({ gameId }: { gameId: string }) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
+  const ru = locale === "ru";
   const [review, setReview] = useState<ReviewState | null>(null);
   const [leaderboardUpdate, setLeaderboardUpdate] = useState<LeaderboardUpdateResult | null>(null);
   const [personality, setPersonality] = useState<CoachPersonality>("Friendly Coach");
@@ -147,7 +148,7 @@ export function AnalysisClient({ gameId }: { gameId: string }) {
       saveEnhancedCoachReview(gameId, payload.review);
       startTransition(() => setEnhancedReview(payload.review ?? null));
     } catch {
-      setEnhancedError("The deeper coach review is using the quick coach review for now.");
+      setEnhancedError(ru ? "Сейчас доступен быстрый разбор. Попробуйте углубленный разбор позже." : "Quick review is ready. Try deeper review again later.");
     } finally {
       setEnhancedLoading(false);
     }
@@ -163,7 +164,7 @@ export function AnalysisClient({ gameId }: { gameId: string }) {
               <p className="text-sm font-semibold tracking-[0.12em] text-[var(--mint)]">{t("noReviewFound")}</p>
               <h1 className="mt-3 font-[var(--font-display)] text-4xl font-bold tracking-[-0.03em]">{t("emptyCoachRoom")}</h1>
               <p className="mt-4 max-w-2xl text-sm leading-6 text-slate-300">
-                I could not find saved moves for <span className="font-semibold text-white">{gameId}</span>. Play a local game or friend room first, then tap Analyze Game so the coach can replay the actual moves.
+                {ru ? "Сыграйте локальную партию или комнату с другом, затем откройте разбор партии." : "Play a local game or friend room first, then open Game Review so the coach can replay the actual moves."}
               </p>
               <div className="mt-7 flex flex-wrap gap-3">
                 <Button asChild>
@@ -193,10 +194,10 @@ export function AnalysisClient({ gameId }: { gameId: string }) {
             <p className="text-sm font-semibold tracking-[0.12em] text-[var(--mint)]">{t("gameReview")}</p>
             <h1 className="mt-2 font-[var(--font-display)] text-4xl font-bold tracking-[-0.03em]">{t("coachRoom")}</h1>
             <p className="mt-2 max-w-xl text-sm leading-6 text-slate-400">
-              {t("coachReview")} · {formatPlyCount(review?.moves.length ?? 0)}. {t("generateDeeperReview")} when you want extra training ideas.
+              {t("coachReview")} / {formatPlyCount(review?.moves.length ?? 0, locale)}. {ru ? "Получите углубленный разбор для дополнительных идей." : "Generate a deeper review when you want extra training ideas."}
             </p>
           </div>
-          {review ? <ChessBoardPanel fen={review.fen} locked /> : <BoardSkeleton />}
+          {review ? <ChessBoardPanel fen={review.fen} locked lastMove={review.moves.at(-1) ?? null} /> : <BoardSkeleton />}
           <Card className="p-5">
             <div className="mb-4 flex items-center gap-2">
               <Medal className="h-5 w-5 text-[var(--gold)]" />
@@ -276,7 +277,8 @@ function EnhancedCoachPanel({
   onGenerate: () => void;
   proActive: boolean;
 }) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
+  const ru = locale === "ru";
   const [answerVisible, setAnswerVisible] = useState(false);
 
   return (
@@ -292,7 +294,7 @@ function EnhancedCoachPanel({
             </p>
           </div>
           <span className="w-fit rounded-full border border-white/10 bg-slate-950/50 px-3 py-1 text-xs font-semibold text-slate-200">
-            {review?.provider === "gemini" ? t("deeperReview") : t("quickReview")}
+            {review ? (ru ? "Готово" : "Ready") : t("quickReview")}
           </span>
         </div>
 
@@ -345,7 +347,6 @@ function EnhancedCoachPanel({
             <CoachTextBlock title={t("trainingDrill")} body={review.trainingDrill} />
             <div className="rounded-[1.25rem] border border-[var(--gold)]/30 bg-[rgba(248,200,106,0.08)] p-4">
               <p className="text-xs font-semibold tracking-[0.12em] text-[var(--gold)]">{t("betterMove")}</p>
-              {review.puzzle.fen ? <p className="mt-2 break-all rounded-xl bg-slate-950/45 p-3 text-xs text-slate-400">FEN: {review.puzzle.fen}</p> : null}
               <p className="mt-3 text-sm leading-6 text-slate-200">{review.puzzle.question}</p>
               {answerVisible ? (
                 <div className="mt-3 rounded-xl border border-white/10 bg-slate-950/45 p-3 text-sm text-slate-300">
@@ -360,7 +361,7 @@ function EnhancedCoachPanel({
           </div>
         ) : (
           <div className="mt-5 rounded-[1.25rem] border border-white/10 bg-white/[0.04] p-4 text-sm leading-6 text-slate-300">
-            {t("quickReview")} ready. {t("generateDeeperReview")}
+            {ru ? "Быстрый разбор готов." : "Quick review is ready."} {t("generateDeeperReview")}
           </div>
         )}
       </div>
@@ -390,35 +391,34 @@ function RankingUpdateCard({ update }: { update: LeaderboardUpdateResult }) {
   return (
     <Card className="overflow-hidden p-0">
       <div className="relative p-5">
-        <div className="pointer-events-none absolute right-0 top-0 h-32 w-32 rounded-full bg-[var(--mint)]/10 blur-2xl" />
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.24em] text-[var(--mint)]">
-              <Trophy className="h-4 w-4" /> {ru ? "Ранг обновлён" : "City ranking updated"}
+            <p className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.18em] text-[var(--mint)]">
+              <Trophy className="h-4 w-4" /> {ru ? "Ранг обновлен" : "City ranking updated"}
             </p>
             <h2 className="mt-2 font-[var(--font-display)] text-2xl font-bold">
-              {update.alreadyCounted ? (ru ? "Этот разбор уже учтён." : "This review is already counted.") : `${ru ? "Вы" : "You are"} #${update.cityRank} ${ru ? "в" : "in"} ${update.player.city}.`}
+              {update.alreadyCounted ? (ru ? "Этот разбор уже учтен." : "This review is already counted.") : `${ru ? "Вы" : "You are"} #${update.cityRank} ${ru ? "в" : "in"} ${update.player.city}.`}
             </h2>
             <p className="mt-2 text-sm leading-6 text-slate-300">
               {update.alreadyCounted
-                ? (ru ? "Прогресс не начисляется дважды за один и тот же разбор." : "Progress does not increment twice for the same analysis.")
+                ? (ru ? "Прогресс не начисляется дважды за один и тот же разбор." : "Progress does not increment twice for the same review.")
                 : ru
                   ? `${update.player.displayName}: ${formatDelta(update.ratingChange)} к рейтингу и ${formatDelta(update.coachScoreChange)} к оценке тренера.`
                   : `${update.player.displayName} gained ${formatDelta(update.ratingChange)} rating and ${formatDelta(update.coachScoreChange)} coach score from this review.`}
             </p>
             <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold text-slate-300">
-              <span className="rounded-full border border-white/10 bg-slate-950/45 px-3 py-1">
-                {update.adapterMode === "supabase" ? t("rankSaved") : t("guestProfile")}
+              <span className="rounded-lg border border-white/10 bg-slate-950/45 px-3 py-1">
+                {update.alreadyCounted ? t("reviewedGames") : t("rankSaved")}
               </span>
-              <span className="rounded-full border border-white/10 bg-slate-950/45 px-3 py-1">
-                {t("rank")} {formatRank(update.oldRank)} → {formatRank(update.newRank)}
+              <span className="rounded-lg border border-white/10 bg-slate-950/45 px-3 py-1">
+                {t("rank")} {formatRank(update.oldRank)} -&gt; {formatRank(update.newRank)}
               </span>
               {update.badgesEarned.length ? update.badgesEarned.map((badge) => (
-                <span key={badge} className="rounded-full border border-[var(--gold)]/25 bg-[rgba(248,200,106,0.1)] px-3 py-1 text-[var(--gold)]">
+                <span key={badge} className="rounded-lg border border-[var(--gold)]/25 bg-[rgba(214,173,99,0.1)] px-3 py-1 text-[var(--gold)]">
                   {badge}
                 </span>
               )) : (
-                <span className="rounded-full border border-white/10 bg-slate-950/45 px-3 py-1">{ru ? "Новых бейджей нет" : "No new badges"}</span>
+                <span className="rounded-lg border border-white/10 bg-slate-950/45 px-3 py-1">{ru ? "Новых бейджей нет" : "No new badges"}</span>
               )}
             </div>
           </div>
@@ -453,6 +453,8 @@ function createDemoReview() {
 }
 
 function MoveTimeline({ evaluations }: { evaluations: MoveEvaluation[] }) {
+  const { locale } = useI18n();
+  const ru = locale === "ru";
   return (
     <div className="max-h-[460px] space-y-3 overflow-y-auto pr-1">
       {evaluations.length ? evaluations.map((item) => (
@@ -469,12 +471,12 @@ function MoveTimeline({ evaluations }: { evaluations: MoveEvaluation[] }) {
             </span>
           </div>
           <p className="mt-2 flex items-center gap-1 text-xs text-slate-500">
-            <ChevronRight className="h-3.5 w-3.5" /> Material after: {formatMaterial(item.materialAfter)} {item.gaveCheck ? "- check" : ""}
+            <ChevronRight className="h-3.5 w-3.5" /> {ru ? "Материал после" : "Material after"}: {formatMaterial(item.materialAfter, locale)} {item.gaveCheck ? (ru ? "- шах" : "- check") : ""}
           </p>
         </div>
       )) : (
         <p className="rounded-[1.15rem] border border-white/10 bg-white/[0.04] p-4 text-sm text-slate-300">
-          Play a few moves and come back here for a move-by-move coach timeline.
+          {ru ? "Сыграйте несколько ходов, и здесь появится лента разбора." : "Play a few moves and come back here for a move-by-move coach timeline."}
         </p>
       )}
     </div>
@@ -482,8 +484,10 @@ function MoveTimeline({ evaluations }: { evaluations: MoveEvaluation[] }) {
 }
 
 function MaterialSwing({ timeline }: { timeline: Array<{ ply: number; label: string; balance: number }> }) {
+  const { locale } = useI18n();
+  const ru = locale === "ru";
   if (!timeline.length) {
-    return <p className="text-sm text-slate-300">No material changes yet. The board stayed balanced in the saved sequence.</p>;
+    return <p className="text-sm text-slate-300">{ru ? "Материальных изменений пока нет. Позиция оставалась равной." : "No material changes yet. The board stayed balanced in the saved sequence."}</p>;
   }
 
   return (
@@ -499,7 +503,7 @@ function MaterialSwing({ timeline }: { timeline: Array<{ ply: number; label: str
                 style={{ width: `${width}%` }}
               />
             </div>
-            <span className="text-right font-semibold text-white">{formatMaterial(point.balance)}</span>
+            <span className="text-right font-semibold text-white">{formatMaterial(point.balance, locale)}</span>
           </div>
         );
       })}
@@ -515,8 +519,9 @@ function qualityClass(quality: MoveEvaluation["quality"]) {
   return "border-white/10 bg-slate-950/35";
 }
 
-function formatMaterial(score: number) {
-  if (score === 0) return "Equal";
+function formatMaterial(score: number, locale: string = "en") {
+  if (score === 0) return locale === "ru" ? "Равно" : "Equal";
+  if (locale === "ru") return `${score > 0 ? "Белые +" : "Черные +"}${Math.abs(score)}`;
   return `${score > 0 ? "White +" : "Black +"}${Math.abs(score)}`;
 }
 
@@ -529,7 +534,8 @@ function formatRank(rank: number | null) {
   return rank ? `#${rank}` : "unranked";
 }
 
-function formatPlyCount(count: number) {
+function formatPlyCount(count: number, locale: string = "en") {
+  if (locale === "ru") return `${count} ходов`;
   if (count === 0) return "0 moves";
   if (count === 1) return "1 ply";
   return `${count} plies`;

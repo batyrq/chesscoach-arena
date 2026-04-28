@@ -2,18 +2,21 @@
 
 :root {
   color-scheme: dark;
-  --background: #11100d;
-  --foreground: #f6f0e4;
-  --muted: #a99f91;
-  --panel: rgba(31, 28, 22, 0.78);
-  --panel-strong: rgba(22, 20, 16, 0.94);
-  --border: rgba(216, 196, 161, 0.16);
-  --gold: #d9ad61;
-  --mint: #81a969;
-  --coral: #d66b5d;
-  --blue: #8fa7bd;
-  --board-light: #e1d0a8;
-  --board-dark: #6f8f4e;
+  --background: #171411;
+  --foreground: #f7f1e7;
+  --muted: #b8ad9f;
+  --panel: rgba(36, 31, 25, 0.86);
+  --panel-strong: rgba(28, 24, 20, 0.96);
+  --border: rgba(229, 213, 184, 0.14);
+  --gold: #d6ad63;
+  --mint: #7fa36a;
+  --coral: #d26d59;
+  --blue: #8da7ad;
+  --walnut: #6d4c33;
+  --board-light: #e8d7b4;
+  --board-dark: #779657;
+  --board-last: rgba(214, 173, 99, 0.54);
+  --board-move: rgba(32, 46, 29, 0.32);
 }
 
 * {
@@ -27,9 +30,8 @@ html {
 body {
   min-height: 100vh;
   background:
-    radial-gradient(circle at top left, rgba(129, 169, 105, 0.13), transparent 30rem),
-    radial-gradient(circle at top right, rgba(217, 173, 97, 0.11), transparent 26rem),
-    linear-gradient(145deg, #0c0b09 0%, #181510 50%, #0f1210 100%);
+    linear-gradient(180deg, rgba(127, 163, 106, 0.08), transparent 22rem),
+    linear-gradient(145deg, #12100e 0%, #1d1813 50%, #141713 100%);
   color: var(--foreground);
   font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
 }
@@ -47,17 +49,17 @@ select {
 
 .glass {
   border: 1px solid var(--border);
-  background: linear-gradient(145deg, rgba(31, 28, 22, 0.82), rgba(20, 18, 14, 0.58));
-  box-shadow: 0 18px 52px rgba(0, 0, 0, 0.32);
-  backdrop-filter: blur(14px);
+  background: linear-gradient(145deg, rgba(36, 31, 25, 0.9), rgba(24, 21, 17, 0.82));
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.26);
+  backdrop-filter: blur(10px);
 }
 
 .mesh-board {
   background-image:
-    linear-gradient(45deg, rgba(225, 208, 168, 0.035) 25%, transparent 25%),
-    linear-gradient(-45deg, rgba(225, 208, 168, 0.035) 25%, transparent 25%),
-    linear-gradient(45deg, transparent 75%, rgba(225, 208, 168, 0.035) 75%),
-    linear-gradient(-45deg, transparent 75%, rgba(225, 208, 168, 0.035) 75%);
+    linear-gradient(45deg, rgba(232, 215, 180, 0.028) 25%, transparent 25%),
+    linear-gradient(-45deg, rgba(232, 215, 180, 0.028) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, rgba(232, 215, 180, 0.028) 75%),
+    linear-gradient(-45deg, transparent 75%, rgba(232, 215, 180, 0.028) 75%);
   background-position: 0 0, 0 10px, 10px -10px, -10px 0;
   background-size: 20px 20px;
 }
@@ -69,4 +71,16 @@ select {
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+.arena-panel {
+  border: 1px solid var(--border);
+  background: var(--panel);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.22);
+}
+
+.arena-badge {
+  border: 1px solid rgba(229, 213, 184, 0.14);
+  background: rgba(255, 255, 255, 0.055);
+  color: #d8cec0;
 }

@@ -11,20 +11,21 @@ import { Card } from "@/components/ui/card";
 import { useI18n } from "@/lib/i18n";
 
 export default function LeaderboardPage() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
+  const ru = locale === "ru";
   return (
     <AppShell>
       <main className="mx-auto w-full max-w-7xl px-5 pb-16 md:px-8">
         <section className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr] lg:items-end">
           <div>
-            <p className="text-sm font-semibold tracking-[0.12em] text-[var(--gold)]">City Arena</p>
+            <p className="text-sm font-semibold tracking-[0.18em] text-[var(--gold)]">{ru ? "Арена" : "City Arena"}</p>
             <h1 className="mt-4 font-[var(--font-display)] text-4xl font-bold leading-tight tracking-[-0.03em]">
               {t("cityArenaRankings")}
             </h1>
             <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-300">
-              Win games, review your mistakes, and climb your city leaderboard.
+              {ru ? "Играйте партии, разбирайте ошибки и поднимайтесь в рейтинге." : "Win games, review your mistakes, and climb the leaderboard."}
             </p>
-            <p className="mt-3 text-sm font-semibold text-slate-400">Your rank updates after reviewed games.</p>
+            <p className="mt-3 text-sm font-semibold text-slate-400">{ru ? "Ранг обновляется после разбора партии." : "Your rank updates after reviewed games."}</p>
             <div className="mt-7 flex flex-wrap gap-3">
               <Button asChild>
                 <Link href="/lobby">{t("playGame")} <ArrowRight className="h-4 w-4" /></Link>
@@ -32,13 +33,13 @@ export default function LeaderboardPage() {
               <Button asChild variant="secondary">
                 <Link href="/analysis/demo">{t("startTraining")}</Link>
               </Button>
-              <ProUpgradeModal triggerLabel="Go Pro" />
+              <ProUpgradeModal triggerLabel={ru ? "Открыть Pro" : "Go Pro"} />
             </div>
           </div>
           <Card className="grid gap-4 p-5 sm:grid-cols-3">
-            <ArenaProof icon={<Trophy className="h-5 w-5" />} label="City Champions" value="Top players rise first" />
-            <ArenaProof icon={<Crosshair className="h-5 w-5" />} label="Coach Score" value="Mistakes become points" />
-            <ArenaProof icon={<ShieldCheck className="h-5 w-5" />} label="Founder Pro" value="Premium status badge" />
+            <ArenaProof icon={<Trophy className="h-5 w-5" />} label={t("cityChampions")} value={ru ? "Лидеры видны сразу" : "Top players rise first"} />
+            <ArenaProof icon={<Crosshair className="h-5 w-5" />} label={ru ? "Оценка тренера" : "Coach Score"} value={ru ? "Ошибки становятся очками" : "Mistakes become points"} />
+            <ArenaProof icon={<ShieldCheck className="h-5 w-5" />} label="Founder Pro" value={ru ? "Аккуратный премиум-бейдж" : "Premium status badge"} />
           </Card>
         </section>
 
@@ -50,16 +51,16 @@ export default function LeaderboardPage() {
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
               <p className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.24em] text-[var(--gold)]">
-                <Medal className="h-4 w-4" /> Weekly city challenge
+                <Medal className="h-4 w-4" /> {ru ? "Недельный челлендж" : "Weekly city challenge"}
               </p>
-              <h2 className="mt-2 font-[var(--font-display)] text-2xl font-bold">Play, review, climb, repeat.</h2>
+              <h2 className="mt-2 font-[var(--font-display)] text-2xl font-bold">{ru ? "Играйте, разбирайте, поднимайтесь." : "Play, review, climb, repeat."}</h2>
               <p className="mt-2 text-sm leading-6 text-slate-300">
-                Every coach review sharpens your form and gives you a reason to challenge the next rival.
+                {ru ? "Каждый разбор делает форму понятнее и помогает выбрать следующую цель." : "Every game review sharpens your form and gives you a reason to challenge the next rival."}
               </p>
             </div>
             <div className="flex flex-wrap gap-3">
               <Button asChild>
-                <Link href="/lobby">Enter Arena <Swords className="h-4 w-4" /></Link>
+                <Link href="/lobby">{ru ? "Войти в арену" : "Enter Arena"} <Swords className="h-4 w-4" /></Link>
               </Button>
               <ProUpgradeModal triggerLabel="Founder Pro" />
             </div>

@@ -43,8 +43,8 @@ export function ProUpgradeModal({ triggerLabel = "Upgrade to Pro" }: { triggerLa
   }
 
   const freeItems = ru
-    ? ["Тренировки и партии с другом", "Быстрый разбор", "Городской рейтинг", "Гостевой профиль"]
-    : ["Practice and friend games", "Quick coach review", "City leaderboard", "Guest profile"];
+    ? ["Партии и комнаты", "Быстрый разбор", "Городской рейтинг", "Гостевой профиль"]
+    : ["Practice and friend games", "Quick game review", "City leaderboard", "Guest profile"];
 
   return (
     <Dialog>
@@ -56,7 +56,7 @@ export function ProUpgradeModal({ triggerLabel = "Upgrade to Pro" }: { triggerLa
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-[var(--gold)]">
+          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--gold)]">
             ChessCoach Pro
           </p>
           <DialogTitle>{ru ? "Превратите каждый зевок в тренировку." : "Turn every blunder into a training loop."}</DialogTitle>
@@ -66,8 +66,8 @@ export function ProUpgradeModal({ triggerLabel = "Upgrade to Pro" }: { triggerLa
         </DialogHeader>
         <div className="mt-6 grid gap-4 md:grid-cols-2">
           <PlanCard title="Free" price="$0" items={freeItems} />
-          <div className="relative overflow-hidden rounded-[1.5rem] border border-[var(--gold)]/45 bg-[linear-gradient(145deg,rgba(248,200,106,0.18),rgba(118,247,203,0.08))] p-5">
-            <div className="absolute right-4 top-4 rounded-full bg-[var(--gold)] px-3 py-1 text-xs font-bold text-slate-950">
+          <div className="relative overflow-hidden rounded-xl border border-[var(--gold)]/45 bg-[linear-gradient(145deg,rgba(214,173,99,0.18),rgba(127,163,106,0.08))] p-5">
+            <div className="absolute right-4 top-4 rounded-lg bg-[var(--gold)] px-3 py-1 text-xs font-bold text-slate-950">
               Founder Demo
             </div>
             <p className="flex items-center gap-2 font-[var(--font-display)] text-xl font-bold">
@@ -75,23 +75,23 @@ export function ProUpgradeModal({ triggerLabel = "Upgrade to Pro" }: { triggerLa
             </p>
             <p className="mt-2 text-3xl font-bold">$9<span className="text-sm text-slate-300">/mo demo</span></p>
             <ul className="mt-5 space-y-3 text-sm text-slate-200">
-              <Feature icon={<Brain className="h-4 w-4" />} text={ru ? "Углублённый разбор тренера" : "Deeper coach review"} />
+              <Feature icon={<Brain className="h-4 w-4" />} text={t("deeperReview")} />
               <Feature icon={<Wand2 className="h-4 w-4" />} text={ru ? "Тренировка по ошибкам" : "Blunder-to-puzzle training"} />
               <Feature icon={<Share2 className="h-4 w-4" />} text={ru ? "Краткое резюме для шера" : "Shareable coach summary"} />
               <Feature icon={<Trophy className="h-4 w-4" />} text={ru ? "Pro-бейдж в городском профиле" : "Pro badge on your city profile"} />
             </ul>
           </div>
         </div>
-        <div className="mt-4 rounded-[1.25rem] border border-white/10 bg-white/[0.04] p-4 text-sm leading-6 text-slate-300">
-          {ru ? "Демо-апгрейд — без реальной оплаты. Статус Founder Pro сохраняется в профиле." : "Demo checkout — no real payment will be charged. The upgrade saves a Founder Pro status with your profile."}
+        <div className="mt-4 rounded-xl border border-white/10 bg-white/[0.04] p-4 text-sm leading-6 text-slate-300">
+          {ru ? "Демо-апгрейд без реальной оплаты. Статус Founder Pro сохраняется в профиле." : "Demo checkout: no real payment will be charged. The upgrade saves Founder Pro status with your profile."}
         </div>
         {status.isPro ? (
-          <div className="mt-4 rounded-[1.25rem] border border-[var(--mint)]/30 bg-[rgba(118,247,203,0.1)] p-4 text-sm text-slate-200">
+          <div className="mt-4 rounded-xl border border-[var(--mint)]/30 bg-[rgba(127,163,106,0.1)] p-4 text-sm text-slate-200">
             <p className="flex items-center gap-2 font-semibold text-white">
               <BadgeCheck className="h-4 w-4 text-[var(--mint)]" /> {t("proActive")}
             </p>
             <p className="mt-1 text-slate-300">
-              {status.provider === "supabase" ? t("progressSaved") : `${t("progressSaved")} · ${t("thisDevice")}`}
+              {t("progressSaved")} / {t("thisDevice")}
             </p>
           </div>
         ) : null}
@@ -110,7 +110,7 @@ export function ProUpgradeModal({ triggerLabel = "Upgrade to Pro" }: { triggerLa
 
 function PlanCard({ title, price, items }: { title: string; price: string; items: string[] }) {
   return (
-    <div className="rounded-[1.5rem] border border-white/10 bg-white/[0.04] p-5">
+    <div className="rounded-xl border border-white/10 bg-white/[0.04] p-5">
       <p className="font-[var(--font-display)] text-xl font-bold">{title}</p>
       <p className="mt-2 text-3xl font-bold">{price}</p>
       <ul className="mt-5 space-y-3 text-sm text-slate-300">

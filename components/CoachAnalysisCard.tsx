@@ -8,7 +8,8 @@ import { useI18n } from "@/lib/i18n";
 import type { AnalysisResult } from "@/lib/types";
 
 export function CoachAnalysisCard({ analysis }: { analysis: AnalysisResult }) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
+  const ru = locale === "ru";
   const moment = analysis.criticalMoment;
 
   return (
@@ -19,10 +20,10 @@ export function CoachAnalysisCard({ analysis }: { analysis: AnalysisResult }) {
       </CardHeader>
       <CardContent className="space-y-5">
         <div className="grid gap-3 sm:grid-cols-4">
-          <Metric label="Accuracy" value={`${analysis.accuracy}%`} />
-          <Metric label="Mistakes" value={analysis.mistakes.toString()} />
-          <Metric label="Blunders" value={analysis.blunders.toString()} />
-          <Metric label="Material" value={formatMaterial(analysis.materialSwing)} />
+          <Metric label={ru ? "Точность" : "Accuracy"} value={`${analysis.accuracy}%`} />
+          <Metric label={ru ? "Ошибки" : "Mistakes"} value={analysis.mistakes.toString()} />
+          <Metric label={ru ? "Зевки" : "Blunders"} value={analysis.blunders.toString()} />
+          <Metric label={ru ? "Материал" : "Material"} value={formatMaterial(analysis.materialSwing, locale)} />
         </div>
         <div className="rounded-[1.25rem] border border-[var(--mint)]/25 bg-[rgba(118,247,203,0.08)] p-4">
           <p className="flex items-center gap-2 font-semibold text-white">
@@ -34,9 +35,9 @@ export function CoachAnalysisCard({ analysis }: { analysis: AnalysisResult }) {
         <Insight icon={<TrendingUp className="h-5 w-5" />} title={`${t("betterMove")}: ${analysis.betterMove}`} body={analysis.whyItWorks} />
         {moment ? (
           <div className="grid gap-3 sm:grid-cols-3">
-            <MomentStat label="Side" value={moment.color === "w" ? "White" : "Black"} />
-            <MomentStat label="Swing" value={`${Math.abs(moment.swing).toFixed(1)} pts`} />
-            <MomentStat label="Before move" value={`Ply ${moment.ply}`} />
+            <MomentStat label={ru ? "Сторона" : "Side"} value={moment.color === "w" ? t("white") : t("black")} />
+            <MomentStat label={ru ? "Перевес" : "Swing"} value={`${Math.abs(moment.swing).toFixed(1)} ${ru ? "очк." : "pts"}`} />
+            <MomentStat label={ru ? "До хода" : "Before move"} value={ru ? `Ход ${moment.ply}` : `Ply ${moment.ply}`} />
           </div>
         ) : null}
         <Insight icon={<Target className="h-5 w-5" />} title={t("trainingDrill")} body={analysis.drill} />
@@ -98,7 +99,8 @@ function Insight({ icon, title, body, tone = "default" }: { icon: React.ReactNod
   );
 }
 
-function formatMaterial(score: number) {
-  if (score === 0) return "Equal";
+function formatMaterial(score: number, locale: string = "en") {
+  if (score === 0) return locale === "ru" ? "Равно" : "Equal";
+  if (locale === "ru") return `${score > 0 ? "+Б" : "+Ч"} ${Math.abs(score)}`;
   return `${score > 0 ? "+W" : "+B"} ${Math.abs(score)}`;
 }

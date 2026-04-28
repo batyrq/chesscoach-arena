@@ -19,7 +19,7 @@ export function PlayerCard({ player, active, clockSeconds = 300, statusLabel }: 
             {player.isPro ? <Crown className="h-4 w-4 text-[var(--gold)]" /> : null}
           </p>
           <p className="mt-1 flex items-center gap-1 text-xs text-slate-400">
-            <MapPin className="h-3.5 w-3.5" /> {player.city} · {player.rating}
+            <MapPin className="h-3.5 w-3.5" /> {player.city} / {player.rating}
           </p>
           {statusLabel ? (
             <p className="mt-2 inline-flex rounded-full border border-white/10 bg-white/[0.06] px-2.5 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-slate-300">

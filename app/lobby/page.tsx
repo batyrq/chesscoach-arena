@@ -39,7 +39,7 @@ function LobbyContent() {
   const [playerProfile, setPlayerProfile] = useState<PlayerProfile | null>(null);
   const [profileHydrated, setProfileHydrated] = useState(false);
   const leaderboard = useMemo(() => createLeaderboardAdapter(), []);
-  const [leaderboardMode, setLeaderboardMode] = useState<"supabase" | "local">("local");
+  const [, setLeaderboardMode] = useState<"supabase" | "local">("local");
   const [proStatus, setProStatus] = useState<ProStatus>(initialProStatus);
   const [playKind, setPlayKind] = useState<PlayKind>("friend");
   const [timeControl, setTimeControl] = useState<TimeControlId>("10+0");
@@ -190,7 +190,7 @@ function LobbyContent() {
                 <label className="space-y-2">
                   <span className="text-sm font-semibold text-slate-200">{t("botLevel")}</span>
                   <Select value={botLevel} onChange={(event) => setBotLevel(event.target.value as BotLevel)}>
-                    {Object.entries(botProfiles).map(([key, bot]) => <option key={key} value={key}>{bot.label} Â· {bot.name}</option>)}
+                    {Object.entries(botProfiles).map(([key, bot]) => <option key={key} value={key}>{bot.label} / {bot.name}</option>)}
                   </Select>
                   <p className="text-xs text-slate-500">{botProfiles[botLevel].tagline}</p>
                 </label>
@@ -208,7 +208,7 @@ function LobbyContent() {
               {playKind === "friend" ? <Link2 className="h-4 w-4" /> : playKind === "bot" ? <Bot className="h-4 w-4" /> : <MonitorPlay className="h-4 w-4" />}
               {playKind === "friend" ? t("createFriendRoom") : playKind === "bot" ? t("playTrainingBot") : t("playSameDevice")}
             </Button>
-            <CityRankPreview profile={playerProfile} city={city} mode={leaderboardMode} />
+            <CityRankPreview profile={playerProfile} city={city} />
             <div className="rounded-[1.5rem] border border-[var(--gold)]/25 bg-[rgba(248,200,106,0.08)] p-4">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
@@ -244,7 +244,7 @@ function LobbyContent() {
   );
 }
 
-function CityRankPreview({ profile, city, mode }: { profile: PlayerProfile | null; city: City; mode: "supabase" | "local" }) {
+function CityRankPreview({ profile, city }: { profile: PlayerProfile | null; city: City }) {
   const { t } = useI18n();
   return (
     <div className="rounded-[1.5rem] border border-[var(--mint)]/20 bg-[rgba(118,247,203,0.07)] p-4">
@@ -252,17 +252,17 @@ function CityRankPreview({ profile, city, mode }: { profile: PlayerProfile | nul
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--mint)]">{t("cityRank")}</p>
           <p className="mt-2 font-[var(--font-display)] text-xl font-bold">
-            {profile ? `${profile.rating} · ${profile.coachScore}` : `1200 · ${city}`}
+            {profile ? `${profile.rating} / ${profile.coachScore}` : `1200 / ${city}`}
           </p>
           <p className="mt-1 text-sm text-slate-300">
             {t("readyToClimb")} {city}. {t("everyReviewUpdates")}
           </p>
           <p className="mt-2 inline-flex rounded-full border border-white/10 bg-slate-950/40 px-3 py-1 text-xs font-semibold text-slate-300">
-            {mode === "supabase" ? t("rankSaved") : t("guestProfile")}
+            {profile ? t("rankSaved") : t("guestProfile")}
           </p>
         </div>
         <div className="rounded-2xl bg-slate-950/45 px-4 py-3 text-sm text-slate-300">
-          {profile ? `${profile.games} · ${profile.reviews}` : t("noRankedGames")}
+          {profile ? `${profile.games} / ${profile.reviews}` : t("noRankedGames")}
         </div>
       </div>
     </div>

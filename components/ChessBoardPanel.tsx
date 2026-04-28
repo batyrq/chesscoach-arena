@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { Chess, type Square } from "chess.js";
 
 const files = ["a", "b", "c", "d", "e", "f", "g", "h"] as const;
 const ranks = ["8", "7", "6", "5", "4", "3", "2", "1"] as const;
@@ -10,13 +11,23 @@ type ChessBoardPanelProps = {
   onDrop?: (sourceSquare: string, targetSquare: string) => boolean;
   locked?: boolean;
   orientation?: "white" | "black";
+  lastMove?: { from: string; to: string } | null;
 };
 
-export function ChessBoardPanel({ fen, onDrop, locked, orientation = "white" }: ChessBoardPanelProps) {
+export function ChessBoardPanel({ fen, onDrop, locked, orientation = "white", lastMove }: ChessBoardPanelProps) {
   const [selectedSquare, setSelectedSquare] = useState<string | null>(null);
   const board = orientBoard(parseFenBoard(fen), orientation);
   const displayFiles = orientation === "white" ? files : [...files].reverse();
   const displayRanks = orientation === "white" ? ranks : [...ranks].reverse();
+  const legalTargets = useMemo(() => {
+    if (!selectedSquare || locked) return new Set<string>();
+    try {
+      const chess = new Chess(fen);
+      return new Set(chess.moves({ square: selectedSquare as Square, verbose: true }).map((move) => move.to));
+    } catch {
+      return new Set<string>();
+    }
+  }, [fen, locked, selectedSquare]);
 
   function handleSquareClick(square: string, piece: string | null) {
     if (locked || !onDrop) return;
@@ -31,10 +42,10 @@ export function ChessBoardPanel({ fen, onDrop, locked, orientation = "white" }: 
   }
 
   return (
-    <div className="relative mx-auto w-full max-w-[min(88vw,620px)] rounded-2xl border border-white/10 bg-stone-950/70 p-2.5 shadow-[0_24px_70px_rgba(0,0,0,0.38)]">
+    <div className="relative mx-auto w-full max-w-[min(92vw,660px)] rounded-xl border border-black/45 bg-[#2a2119] p-2 shadow-[0_22px_46px_rgba(0,0,0,0.34)]">
       <div
         data-testid="chess-board"
-        className="grid aspect-square grid-cols-8 grid-rows-8 overflow-hidden rounded-xl border border-black/40 bg-stone-950"
+        className="grid aspect-square grid-cols-8 grid-rows-8 overflow-hidden rounded-lg border border-black/55 bg-stone-950"
         style={{
           gridTemplateColumns: "repeat(8, minmax(0, 1fr))",
           gridTemplateRows: "repeat(8, minmax(0, 1fr))"
@@ -44,6 +55,8 @@ export function ChessBoardPanel({ fen, onDrop, locked, orientation = "white" }: 
           const square = `${displayFiles[colIndex]}${displayRanks[rowIndex]}`;
           const light = (rowIndex + colIndex) % 2 === 0;
           const selected = selectedSquare === square;
+          const last = lastMove?.from === square || lastMove?.to === square;
+          const legal = legalTargets.has(square);
 
           return (
             <button
@@ -53,11 +66,13 @@ export function ChessBoardPanel({ fen, onDrop, locked, orientation = "white" }: 
               data-square={square}
               disabled={locked}
               onClick={() => handleSquareClick(square, piece)}
-              className={`relative flex items-center justify-center text-[clamp(2rem,7vw,4.25rem)] leading-none transition duration-150 ${light ? "bg-[var(--board-light)]" : "bg-[var(--board-dark)]"} ${selected ? "ring-4 ring-inset ring-[var(--gold)]" : ""} ${locked ? "cursor-default" : "hover:brightness-105 active:scale-[0.98]"}`}
+              className={`relative flex items-center justify-center leading-none transition duration-150 ${light ? "bg-[var(--board-light)]" : "bg-[var(--board-dark)]"} ${selected ? "ring-4 ring-inset ring-[#f0c15f]" : ""} ${locked ? "cursor-default" : "hover:brightness-105 active:scale-[0.99]"}`}
               aria-label={`${square}${piece ? ` ${pieceName(piece)}` : ""}`}
             >
-              {rowIndex === 7 ? <span className={`pointer-events-none absolute bottom-1 right-1 text-[0.58rem] font-semibold uppercase ${light ? "text-stone-800/55" : "text-stone-50/60"}`}>{displayFiles[colIndex]}</span> : null}
-              {colIndex === 0 ? <span className={`pointer-events-none absolute left-1 top-1 text-[0.58rem] font-semibold ${light ? "text-stone-800/55" : "text-stone-50/60"}`}>{displayRanks[rowIndex]}</span> : null}
+              {last ? <span className="pointer-events-none absolute inset-0 bg-[var(--board-last)] mix-blend-multiply" /> : null}
+              {legal ? <span className={`pointer-events-none absolute rounded-full ${piece ? "inset-[18%] border-[5px] border-black/25" : "h-[24%] w-[24%] bg-black/24"}`} /> : null}
+              {rowIndex === 7 ? <span className={`pointer-events-none absolute bottom-1 right-1 z-10 text-[0.62rem] font-bold uppercase ${light ? "text-stone-800/55" : "text-stone-50/65"}`}>{displayFiles[colIndex]}</span> : null}
+              {colIndex === 0 ? <span className={`pointer-events-none absolute left-1 top-1 z-10 text-[0.62rem] font-bold ${light ? "text-stone-800/55" : "text-stone-50/65"}`}>{displayRanks[rowIndex]}</span> : null}
               {piece ? <PieceSvg piece={piece} /> : null}
             </button>
           );
@@ -107,9 +122,9 @@ function getPieceCode(piece: string) {
 function PieceSvg({ piece }: { piece: string }) {
   const color = getPieceColor(piece);
   const type = piece.toLowerCase();
-  const fill = color === "white" ? "#f7efe0" : "#17130f";
-  const stroke = color === "white" ? "#5a4934" : "#f3dfb9";
-  const accent = color === "white" ? "#fffaf0" : "#2a2119";
+  const fill = color === "white" ? "#fff6e5" : "#151515";
+  const stroke = color === "white" ? "#4f4030" : "#ead7b4";
+  const accent = color === "white" ? "#fffdf5" : "#2d2d2d";
 
   return (
     <svg
@@ -117,10 +132,10 @@ function PieceSvg({ piece }: { piece: string }) {
       data-piece-code={getPieceCode(piece)}
       data-piece-color={color}
       viewBox="0 0 100 100"
-      className="pointer-events-none h-[80%] w-[80%] select-none drop-shadow-[0_4px_5px_rgba(0,0,0,0.42)]"
-      style={{ filter: color === "white" ? "drop-shadow(0 2px 1px rgba(36, 24, 15, 0.78))" : "drop-shadow(0 1px 1px rgba(255, 239, 206, 0.42))" }}
+      className="pointer-events-none z-10 h-[82%] w-[82%] select-none"
+      style={{ filter: color === "white" ? "drop-shadow(0 3px 2px rgba(36, 24, 15, 0.65))" : "drop-shadow(0 2px 1px rgba(255, 239, 206, 0.36)) drop-shadow(0 4px 3px rgba(0,0,0,0.35))" }}
     >
-      <g fill={fill} stroke={stroke} strokeLinecap="round" strokeLinejoin="round" strokeWidth="4">
+      <g fill={fill} stroke={stroke} strokeLinecap="round" strokeLinejoin="round" strokeWidth="4.5">
         <path d="M24 86h52l-4-12H28z" />
         <path d="M31 74h38l-3-10H34z" />
         {type === "p" ? <Pawn /> : null}

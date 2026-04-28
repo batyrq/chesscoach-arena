@@ -19,7 +19,8 @@ import type { City } from "@/lib/types";
 type AuthMode = "signin" | "signup";
 
 export default function AuthPage() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
+  const ru = locale === "ru";
   const router = useRouter();
   const [mode, setMode] = useState<AuthMode>("signin");
   const [email, setEmail] = useState("");
@@ -53,7 +54,7 @@ export default function AuthPage() {
 
     if (!supabase) {
       setConfigured(false);
-      setMessage("Accounts are not available here. Continue as a guest and your progress will stay on this device.");
+      setMessage(ru ? "Аккаунты сейчас недоступны. Продолжайте гостем, прогресс останется на этом устройстве." : "Accounts are unavailable right now. Continue as a guest and your progress will stay on this device.");
       return;
     }
 
@@ -69,7 +70,7 @@ export default function AuthPage() {
         if (signUpError) throw signUpError;
 
         if (!data.session) {
-          setMessage("Account created. If a confirmation step appears, ask the project owner to turn off email confirmation for demo mode.");
+          setMessage(ru ? "Аккаунт создан. Если появится подтверждение, проверьте почту." : "Account created. If a confirmation step appears, check your email.");
           return;
         }
 
@@ -105,9 +106,9 @@ export default function AuthPage() {
             {t("authSubtitle")}
           </p>
           <div className="mt-6 grid gap-3 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
-            <Proof icon={<ShieldCheck className="h-4 w-4" />} label="No email gate" value="Demo starts immediately" />
-            <Proof icon={<Sparkles className="h-4 w-4" />} label="Coach sync" value="Reviews stay linked" />
-            <Proof icon={<BadgeCheck className="h-4 w-4" />} label="Pro status" value="Founder badge travels" />
+            <Proof icon={<ShieldCheck className="h-4 w-4" />} label={ru ? "Профиль" : "Profile"} value={ru ? "Быстрый старт" : "Fast start"} />
+            <Proof icon={<Sparkles className="h-4 w-4" />} label={t("gameReview")} value={ru ? "Разборы остаются в профиле" : "Reviews stay linked"} />
+            <Proof icon={<BadgeCheck className="h-4 w-4" />} label="Pro" value={ru ? "Бейдж остается с вами" : "Founder badge travels"} />
           </div>
         </section>
         <Card className="p-6 md:p-8">
@@ -155,7 +156,7 @@ export default function AuthPage() {
 
             {!configured ? (
               <div className="rounded-[1.25rem] border border-[var(--gold)]/25 bg-[rgba(248,200,106,0.08)] p-4 text-sm leading-6 text-slate-300">
-                Accounts are not available in this session. Guest play still works, including games, reviews, Pro demo, and leaderboard progress on this device.
+                {ru ? "Аккаунты сейчас недоступны. Гостевая игра, разборы, Pro Demo и рейтинг на этом устройстве продолжают работать." : "Accounts are unavailable right now. Guest play still works, including games, reviews, Pro demo, and leaderboard progress on this device."}
               </div>
             ) : null}
             {message ? <p className="rounded-[1.25rem] border border-[var(--mint)]/25 bg-[rgba(118,247,203,0.08)] p-4 text-sm leading-6 text-slate-200">{message}</p> : null}
@@ -165,7 +166,7 @@ export default function AuthPage() {
               {loading ? "..." : mode === "signup" ? t("createDemoAccount") : t("signInAndSync")}
             </Button>
             <p className="text-xs leading-5 text-slate-500">
-              For the demo, signup starts immediately without email confirmation. If a confirmation step appears, ask the project owner to turn it off for demo mode.
+              {ru ? "Для демо достаточно обычного email и пароля." : "For the demo, use a regular email and password."}
             </p>
           </form>
         </Card>
