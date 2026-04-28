@@ -226,8 +226,10 @@ class SupabaseRealtimeAdapter implements MultiplayerAdapter {
 
         if (error) throw error;
 
+        await this.rebalanceJoinedPlayerRole(client, roomId, player.id);
         const nextState = await this.refreshRoomStatus(client, roomId);
-        return { state: nextState, role, mode: this.mode, playerId: player.id };
+        const nextRole = nextState.players.find((item) => item.id === player.id)?.role ?? role;
+        return { state: nextState, role: nextRole, mode: this.mode, playerId: player.id };
       },
       () => this.fallback.joinRoom(roomId, profile, playerId, tabToken),
     );
@@ -385,10 +387,7 @@ class SupabaseRealtimeAdapter implements MultiplayerAdapter {
   }
 
   private async ensureRoom(client: SupabaseClient, roomId: string) {
-    const { data } = await client.from("rooms").select("id").eq("id", roomId).maybeSingle();
-    if (data) return;
-
-    const { error } = await client.from("rooms").insert({
+    const { error } = await client.from("rooms").upsert({
       id: roomId,
       status: "waiting",
       fen: startingFen,
@@ -396,9 +395,29 @@ class SupabaseRealtimeAdapter implements MultiplayerAdapter {
       current_turn: "w",
       move_count: 0,
       version: 0,
-    });
+    }, { onConflict: "id", ignoreDuplicates: true });
 
-    if (error && error.code !== "23505") throw error;
+    if (error) throw error;
+  }
+
+  private async rebalanceJoinedPlayerRole(client: SupabaseClient, roomId: string, playerId: string) {
+    const state = await this.fetchRoomState(client, roomId);
+    if (state.players.some((player) => player.role === "black")) return;
+
+    const whitePlayers = state.players.filter((player) => player.role === "white").sort(sortPlayers);
+    if (whitePlayers.length < 2) return;
+
+    const firstWhite = whitePlayers[0];
+    const currentPlayer = whitePlayers.find((player) => player.id === playerId);
+    if (!currentPlayer || currentPlayer.id === firstWhite.id) return;
+
+    const { error } = await client
+      .from("room_players")
+      .update({ role: "black", online: true })
+      .eq("room_id", roomId)
+      .eq("player_id", playerId);
+
+    if (error) throw error;
   }
 
   private async upsertPlayer(client: SupabaseClient, profile: RoomProfile, playerId: string) {
