@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Bot, Clock3, Crown, Link2, MapPin, MonitorPlay, Sparkles, Trophy } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
+import { ProgressOverview } from "@/components/ProgressWidgets";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -127,7 +128,7 @@ function LobbyContent() {
 
   return (
     <AppShell>
-      <main className="mx-auto grid min-h-[calc(100vh-96px)] w-full max-w-6xl items-center gap-8 px-5 pb-16 md:px-8 lg:grid-cols-[0.9fr_1.1fr]">
+      <main className="mx-auto grid min-h-[calc(100vh-96px)] w-full max-w-6xl items-start gap-8 px-5 pb-16 pt-4 md:px-8 lg:grid-cols-[0.9fr_1.1fr]">
         <div>
           <p className="text-sm font-semibold uppercase tracking-[0.3em] text-[var(--mint)]">
             {friendMode ? t("friendRoom") : t("chooseGame")}
@@ -138,6 +139,9 @@ function LobbyContent() {
           <p className="mt-5 text-base leading-7 text-slate-300">
             {t("lobbySubtitle")}
           </p>
+          <div className="mt-6">
+            <ProgressOverview compact />
+          </div>
           <div className="mt-6 grid gap-3 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
             <OnboardingProof icon={<MapPin className="h-4 w-4" />} label={t("cityIdentity")} value={city} />
             <OnboardingProof icon={<Sparkles className="h-4 w-4" />} label={t("coachLoop")} value={t("instantReview")} />

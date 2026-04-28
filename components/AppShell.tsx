@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { Languages, Swords } from "lucide-react";
 import { AuthStatus } from "@/components/AuthStatus";
+import { MobileBottomNav } from "@/components/MobileBottomNav";
+import { OnboardingFlow } from "@/components/OnboardingFlow";
 import { ProUpgradeModal } from "@/components/ProUpgradeModal";
 import { useI18n } from "@/lib/i18n";
 
@@ -10,7 +12,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const { locale, setLocale, t } = useI18n();
 
   return (
-    <div className="min-h-screen overflow-hidden">
+    <div className="min-h-screen overflow-hidden pb-16 md:pb-0">
       <div className="pointer-events-none fixed inset-0 -z-10 mesh-board opacity-25" />
       <header className="mx-auto flex w-full max-w-7xl items-center justify-between px-5 py-4 md:px-8">
         <Link href="/" className="flex items-center gap-3">
@@ -23,7 +25,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </Link>
         <nav className="hidden items-center gap-6 text-sm text-slate-300 lg:flex">
+          <Link className="transition hover:text-white" href="/">{locale === "ru" ? "Домой" : "Home"}</Link>
           <Link className="transition hover:text-white" href="/lobby">{t("lobby")}</Link>
+          <Link className="transition hover:text-white" href="/learn">{locale === "ru" ? "Учиться" : "Learn"}</Link>
           <Link className="transition hover:text-white" href="/leaderboard">{t("leaderboard")}</Link>
           <ProUpgradeModal triggerLabel={t("pro")} />
           <LanguageToggle locale={locale} setLocale={setLocale} />
@@ -31,6 +35,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </nav>
         <div className="hidden items-center gap-3 md:flex lg:hidden">
           <Link className="text-sm text-slate-300 transition hover:text-white" href="/lobby">{t("lobby")}</Link>
+          <Link className="text-sm text-slate-300 transition hover:text-white" href="/learn">{locale === "ru" ? "Учиться" : "Learn"}</Link>
           <Link className="text-sm text-slate-300 transition hover:text-white" href="/leaderboard">{t("leaderboard")}</Link>
           <LanguageToggle locale={locale} setLocale={setLocale} />
           <AuthStatus />
@@ -43,6 +48,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
       </header>
       {children}
+      <MobileBottomNav />
+      <OnboardingFlow />
     </div>
   );
 }

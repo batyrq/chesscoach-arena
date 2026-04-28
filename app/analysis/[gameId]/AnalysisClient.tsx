@@ -8,6 +8,7 @@ import { AppShell } from "@/components/AppShell";
 import { ChessBoardPanel } from "@/components/ChessBoardPanel";
 import { CoachAnalysisCard } from "@/components/CoachAnalysisCard";
 import { MoveHistory } from "@/components/MoveHistory";
+import { ReviewLearningBridge } from "@/components/ReviewLearningBridge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Select } from "@/components/ui/select";
@@ -15,6 +16,7 @@ import { analyzeGameFromMoves } from "@/lib/analysis";
 import type { CoachPersonality, EnhancedCoachReview } from "@/lib/coach-review";
 import { createLeaderboardAdapter } from "@/lib/leaderboard";
 import { loadProStatus, type ProStatus } from "@/lib/pro";
+import { recordProgressEvent } from "@/lib/progress";
 import { loadGameReview } from "@/lib/storage";
 import { useI18n } from "@/lib/i18n";
 import type { LeaderboardUpdateResult, MoveEvaluation } from "@/lib/types";
@@ -62,6 +64,14 @@ export function AnalysisClient({ gameId }: { gameId: string }) {
       cancelled = true;
     };
   }, [analysis, gameId, leaderboard, review]);
+
+  useEffect(() => {
+    if (!analysis || !review) return;
+    const key = `chesscoach.reviewXp.${gameId}`;
+    if (window.localStorage.getItem(key)) return;
+    window.localStorage.setItem(key, "1");
+    recordProgressEvent("review", { xp: gameId === "demo" ? 15 : 35 });
+  }, [analysis, gameId, review]);
 
   useEffect(() => {
     if (!analysis || !review || gameId === "demo") return;
@@ -208,6 +218,7 @@ export function AnalysisClient({ gameId }: { gameId: string }) {
         </section>
         <section className="space-y-5">
           {analysis ? <CoachAnalysisCard analysis={analysis} /> : <Card className="h-96 animate-pulse" />}
+          {analysis ? <ReviewLearningBridge analysis={analysis} /> : null}
           {analysis ? (
             <EnhancedCoachPanel
               review={enhancedReview}

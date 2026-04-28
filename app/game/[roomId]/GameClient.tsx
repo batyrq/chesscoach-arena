@@ -17,6 +17,7 @@ import { getBrowserTabToken, getOrCreateRoomPlayerId, loadProfile, saveGameRevie
 import { createMultiplayerAdapter } from "@/lib/multiplayer";
 import { botProfiles, chooseBotMove, getTimeControl, type BotLevel } from "@/lib/chess-play";
 import { localizeMode, useI18n } from "@/lib/i18n";
+import { recordProgressEvent } from "@/lib/progress";
 import type { City, Move, MultiplayerRoomState, Player, RoomRole } from "@/lib/types";
 
 export function GameClient({ roomId }: { roomId: string }) {
@@ -234,6 +235,7 @@ export function GameClient({ roomId }: { roomId: string }) {
       mode: isBotGame ? "Training Bot" : isLocalRoom(roomId) ? "Same Device" : "Friend Room",
       timeControl: timeControl.label
     });
+    if (isBotGame) recordProgressEvent("training-game");
     window.location.href = `/analysis/${gameId}`;
   }
 
