@@ -8,12 +8,14 @@ import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { activateDemoPro, loadProStatus, type ProStatus } from "@/lib/pro";
+import { useI18n } from "@/lib/i18n";
 
 const freeFeatures = ["Local games", "Friend rooms", "Engine-lite review", "City leaderboard"];
 const proFeatures = ["Gemini coach review", "Blunder-to-puzzle drills", "Personalized training plan", "Founder Pro badge"];
 const initialProStatus: ProStatus = { isPro: false, status: "free", plan: "free", provider: "local" };
 
 export default function ProPage() {
+  const { t } = useI18n();
   const [status, setStatus] = useState<ProStatus>(initialProStatus);
   const [upgrading, setUpgrading] = useState(false);
 
@@ -33,17 +35,17 @@ export default function ProPage() {
       <main className="mx-auto w-full max-w-7xl px-5 pb-16 pt-4 md:px-8">
         <section className="grid gap-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-[var(--gold)]">Founder demo checkout</p>
-            <h1 className="mt-4 font-[var(--font-display)] text-5xl font-black leading-tight tracking-[-0.05em]">
-              Pro makes the coach loop feel like a real training product.
+            <p className="text-sm font-semibold tracking-[0.12em] text-[var(--gold)]">Founder demo</p>
+            <h1 className="mt-4 font-[var(--font-display)] text-4xl font-bold leading-tight tracking-[-0.03em]">
+              {t("proTitle")}
             </h1>
-            <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-300">
-              Play chess with friends, get AI coaching, solve your blunders as puzzles, and compete in your city. This demo upgrade shows the monetization path without collecting payment.
+            <p className="mt-5 max-w-2xl text-base leading-7 text-slate-300">
+              {t("proSubtitle")}
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
               {status.isPro ? <FounderBadge provider={status.provider} /> : null}
-              <span className="rounded-full border border-white/10 bg-white/[0.05] px-4 py-2 text-sm text-slate-300">No real payment</span>
-              <span className="rounded-full border border-white/10 bg-white/[0.05] px-4 py-2 text-sm text-slate-300">Progress saved</span>
+              <span className="rounded-full border border-white/10 bg-white/[0.05] px-4 py-2 text-sm text-slate-300">{t("noRealPayment")}</span>
+              <span className="rounded-full border border-white/10 bg-white/[0.05] px-4 py-2 text-sm text-slate-300">{t("progressSaved")}</span>
             </div>
           </div>
           <Card className="overflow-hidden p-0">
@@ -62,7 +64,7 @@ export default function ProPage() {
                   ))}
                 </ul>
                 <Button className="mt-7 w-full" size="lg" onClick={() => void upgrade()} disabled={upgrading || status.isPro}>
-                  <Sparkles className="h-4 w-4" /> {status.isPro ? "Founder Pro active" : upgrading ? "Activating demo..." : "Upgrade to Pro Demo"}
+                  <Sparkles className="h-4 w-4" /> {status.isPro ? t("proActive") : upgrading ? "..." : t("upgradeToProDemo")}
                 </Button>
               </div>
             </div>

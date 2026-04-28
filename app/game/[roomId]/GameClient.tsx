@@ -16,9 +16,11 @@ import { Card } from "@/components/ui/card";
 import { getBrowserTabToken, getOrCreateRoomPlayerId, loadProfile, saveGameReview, saveProfile, saveRoomPlayerId } from "@/lib/storage";
 import { createMultiplayerAdapter } from "@/lib/multiplayer";
 import { botProfiles, chooseBotMove, getTimeControl, type BotLevel } from "@/lib/chess-play";
+import { localizeMode, useI18n } from "@/lib/i18n";
 import type { City, Move, MultiplayerRoomState, Player, RoomRole } from "@/lib/types";
 
 export function GameClient({ roomId }: { roomId: string }) {
+  const { t } = useI18n();
   const searchParams = useSearchParams();
   const timeControl = useMemo(() => getTimeControl(searchParams.get("tc")), [searchParams]);
   const botLevel = (searchParams.get("bot") as BotLevel | null) ?? "club";
@@ -259,11 +261,11 @@ export function GameClient({ roomId }: { roomId: string }) {
     if (!result.ok) setMoveError(result.reason ?? "Could not update room.");
   }
 
-  const status = getStatus(game, ended, whiteClock, blackClock, roomId, isLocalGame, isBotGame, roomState, roomRole, botThinking, userColor);
+  const status = getStatus(game, ended, whiteClock, blackClock, roomId, isLocalGame, isBotGame, roomState, roomRole, botThinking, userColor, t);
   const intense = game.inCheck() || game.isCheckmate() || whiteClock === 0 || blackClock === 0;
   const turnPlayer = game.turn() === "w" ? players[0] : players[1];
   const canMove = isBotGame ? !botThinking && ((userColor === "white" && game.turn() === "w") || (userColor === "black" && game.turn() === "b")) : isLocalGame || canCurrentTabMove(roomState, roomRole, game.turn());
-  const roleLabel = isBotGame ? `Training Bot · You are ${userColor === "white" ? "White" : "Black"}` : isLocalRoom(roomId) ? "Same device" : roomRole === "spectator" ? "Spectator mode" : `You are ${roomRole === "white" ? "White" : "Black"}`;
+  const roleLabel = isBotGame ? `${t("trainingBot")} · ${userColor === "white" ? t("white") : t("black")}` : isLocalRoom(roomId) ? t("sameDevice") : roomRole === "spectator" ? t("spectatorMode") : `${roomRole === "white" ? t("white") : t("black")}`;
   const boardOrientation = isBotGame ? userColor : roomRole === "black" ? "black" : "white";
 
   return (
@@ -273,18 +275,18 @@ export function GameClient({ roomId }: { roomId: string }) {
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
               <p className="text-sm font-semibold uppercase tracking-[0.3em] text-[var(--gold)]">Room {roomId}</p>
-              <h1 className="mt-2 font-[var(--font-display)] text-4xl font-black tracking-[-0.04em]">Training match</h1>
+              <h1 className="mt-2 font-[var(--font-display)] text-3xl font-bold tracking-[-0.02em]">{t("practiceGame")}</h1>
               <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold text-slate-300">
                 <span className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-1">{roleLabel}</span>
-                <span className="rounded-full border border-[var(--mint)]/20 bg-[rgba(118,247,203,0.08)] px-3 py-1">{timeControl.mode}</span>
+                <span className="rounded-full border border-[var(--mint)]/20 bg-[rgba(129,169,105,0.12)] px-3 py-1">{localizeMode(timeControl.mode, t)}</span>
                 <span className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-1">{timeControl.label}</span>
-                {!isLocalGame ? <span className="rounded-full border border-[var(--mint)]/20 bg-[rgba(118,247,203,0.08)] px-3 py-1">{realtimeMode === "supabase" ? "Synced game" : "Guest room"}</span> : null}
+                {!isLocalGame ? <span className="rounded-full border border-[var(--mint)]/20 bg-[rgba(129,169,105,0.12)] px-3 py-1">{realtimeMode === "supabase" ? t("syncedGame") : t("friendRoom")}</span> : null}
               </div>
             </div>
             <div className="flex flex-wrap gap-3">
               <ShareRoomButton roomId={roomId} />
               <Button onClick={saveAndReview}>
-                <Search className="h-4 w-4" /> Analyze Game
+                <Search className="h-4 w-4" /> {t("analyzeGame")}
               </Button>
             </div>
           </div>
@@ -297,29 +299,29 @@ export function GameClient({ roomId }: { roomId: string }) {
           <PlayerCard player={players[1]} active={game.turn() === "b" && !ended} clockSeconds={blackClock} statusLabel={getPlayerStatus(roomState, "black", isLocalGame, isBotGame, userColor)} />
           <Card className="p-5">
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="font-[var(--font-display)] text-xl font-bold">Score sheet</h2>
+              <h2 className="font-[var(--font-display)] text-xl font-bold">{t("scoreSheet")}</h2>
               <span className="rounded-full bg-white/10 px-3 py-1 text-xs text-slate-300">{formatPlyCount(moves.length)}</span>
             </div>
             <div className="mb-4 grid grid-cols-2 gap-2 text-xs font-semibold text-slate-300">
               <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-slate-950/45 px-3 py-1"><Timer className="h-3.5 w-3.5 text-[var(--mint)]" /> {timeControl.label}</span>
-              <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-slate-950/45 px-3 py-1"><Swords className="h-3.5 w-3.5 text-[var(--gold)]" /> {timeControl.mode}</span>
+              <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-slate-950/45 px-3 py-1"><Swords className="h-3.5 w-3.5 text-[var(--gold)]" /> {localizeMode(timeControl.mode, t)}</span>
             </div>
             <MoveHistory moves={moves} />
             <GameStats moves={moves} />
             <div className="mt-4 grid grid-cols-3 gap-2">
               <Button variant="secondary" size="sm" onClick={() => void endCurrentRoom("ended")}>
-                <Flag className="h-3.5 w-3.5" /> Resign
+                <Flag className="h-3.5 w-3.5" /> {t("resign")}
               </Button>
               <Button variant="secondary" size="sm" onClick={() => void endCurrentRoom("draw")}>
-                <Handshake className="h-3.5 w-3.5" /> Draw
+                <Handshake className="h-3.5 w-3.5" /> {t("draw")}
               </Button>
               <Button variant="secondary" size="sm" onClick={resetGame} disabled={!isLocalGame}>
-                <RotateCcw className="h-3.5 w-3.5" /> New Game
+                <RotateCcw className="h-3.5 w-3.5" /> {t("newGame")}
               </Button>
             </div>
             {ended || game.isGameOver() ? (
               <Button className="mt-3 w-full" onClick={saveAndReview}>
-                <Search className="h-4 w-4" /> Game Review
+                <Search className="h-4 w-4" /> {t("gameReview")}
               </Button>
             ) : null}
           </Card>
@@ -359,15 +361,16 @@ function formatPlyCount(count: number) {
 }
 
 function ArenaHud({ white, black, turnName, moves, roomId, onCoachStarter, canUseStarter, roleLabel, botThinking }: { white: Player; black: Player; turnName: string; moves: number; roomId: string; onCoachStarter: () => void; canUseStarter: boolean; roleLabel: string; botThinking: boolean }) {
-  const centerLabel = isBotRoom(roomId) ? "Training Bot" : !isLocalRoom(roomId) ? "Friend room" : roleLabel;
+  const { t } = useI18n();
+  const centerLabel = isBotRoom(roomId) ? t("trainingBot") : !isLocalRoom(roomId) ? t("friendRoom") : roleLabel;
 
   return (
     <div className="grid gap-3 rounded-[1.75rem] border border-white/10 bg-white/[0.05] p-4 sm:grid-cols-[1fr_auto_1fr] sm:items-center">
       <MiniPlayer label="White" player={white} active={turnName === white.name} />
       <div className="rounded-[1.25rem] bg-slate-950/55 px-4 py-3 text-center">
-        <p className="text-[0.68rem] uppercase tracking-[0.2em] text-slate-500">Next action</p>
+        <p className="text-[0.68rem] tracking-[0.12em] text-slate-500">{t("play")}</p>
         <p className="mt-1 text-sm font-semibold text-white">
-          {botThinking ? "Bot thinking..." : moves === 0 ? "Drag a white piece to start" : `${turnName}'s turn`}
+          {botThinking ? t("botThinking") : moves === 0 ? t("whiteToMove") : `${turnName}'s turn`}
         </p>
         <p className="mt-1 text-xs text-[var(--gold)]">{centerLabel}</p>
         {moves < 6 && canUseStarter ? (
@@ -376,7 +379,7 @@ function ArenaHud({ white, black, turnName, moves, roomId, onCoachStarter, canUs
             onClick={onCoachStarter}
             className="mt-3 rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-xs font-semibold text-slate-200 transition hover:bg-white/15"
           >
-            Coach starter move
+            {t("startTraining")}
           </button>
         ) : null}
       </div>
@@ -396,6 +399,7 @@ function MiniPlayer({ label, player, active }: { label: string; player: Player; 
 }
 
 function GameStats({ moves }: { moves: Move[] }) {
+  const { t } = useI18n();
   const captures = moves.filter((move) => move.captured);
   const checks = moves.filter((move) => move.san.includes("+") || move.san.includes("#"));
   const whiteCaptures = captures.filter((move) => move.color === "w").length;
@@ -404,12 +408,12 @@ function GameStats({ moves }: { moves: Move[] }) {
   return (
     <div className="mt-4 rounded-[1.25rem] border border-white/10 bg-white/[0.04] p-4">
       <p className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-200">
-        <Activity className="h-4 w-4 text-[var(--mint)]" /> Match pulse
+        <Activity className="h-4 w-4 text-[var(--mint)]" /> {t("matchPulse")}
       </p>
       <div className="grid grid-cols-3 gap-2 text-center">
-        <Stat label="Captures" value={`${whiteCaptures}-${blackCaptures}`} />
-        <Stat label="Checks" value={checks.length.toString()} />
-        <Stat label="Phase" value={moves.length < 10 ? "Open" : moves.length < 32 ? "Mid" : "End"} />
+        <Stat label={t("captures")} value={`${whiteCaptures}-${blackCaptures}`} />
+        <Stat label={t("checks")} value={checks.length.toString()} />
+        <Stat label={t("phase")} value={moves.length < 10 ? t("opening") : moves.length < 32 ? t("middlegame") : t("endgame")} />
       </div>
     </div>
   );
@@ -424,19 +428,19 @@ function Stat({ label, value }: { label: string; value: string }) {
   );
 }
 
-function getStatus(game: Chess, ended: boolean, whiteClock: number, blackClock: number, roomId: string, isLocalGame: boolean, isBotGame: boolean, roomState: MultiplayerRoomState | null, roomRole: RoomRole, botThinking: boolean, userColor: "white" | "black") {
+function getStatus(game: Chess, ended: boolean, whiteClock: number, blackClock: number, roomId: string, isLocalGame: boolean, isBotGame: boolean, roomState: MultiplayerRoomState | null, roomRole: RoomRole, botThinking: boolean, userColor: "white" | "black", t: ReturnType<typeof useI18n>["t"]) {
   if (whiteClock === 0) return "Black wins on time. Review the scramble while it is fresh.";
   if (blackClock === 0) return "White wins on time. Clean clock pressure.";
   if (ended) return "Game ended. Jump to review for coach feedback.";
-  if (isBotGame && botThinking) return "Training Bot is thinking.";
-  if (isBotGame) return game.turn() === (userColor === "white" ? "w" : "b") ? "Your turn." : "Bot's turn.";
-  if (!isLocalGame && roomRole === "spectator") return "Spectator mode. You can watch the game and open the coach review.";
-  if (!isLocalGame && roomState?.status === "waiting") return "Waiting for opponent. Share the invite link to assign Black.";
+  if (isBotGame && botThinking) return t("botThinking");
+  if (isBotGame) return game.turn() === (userColor === "white" ? "w" : "b") ? t("yourMove") : t("opponentsMove");
+  if (!isLocalGame && roomRole === "spectator") return t("spectatorMode");
+  if (!isLocalGame && roomState?.status === "waiting") return t("waitingOpponent");
   if (game.isCheckmate()) return `${game.turn() === "w" ? "Black" : "White"} wins by checkmate.`;
   if (game.isDraw()) return "Draw agreed by the position. Time to inspect the missed chances.";
   if (game.inCheck()) return `${game.turn() === "w" ? "White" : "Black"} to move is in check.`;
-  if (!isLocalGame) return `${game.turn() === "w" ? "White" : "Black"} to move. Synced friend room is live.`;
-  return `${game.turn() === "w" ? "White" : "Black"} to move.`;
+  if (!isLocalGame) return game.turn() === "w" ? t("whiteToMove") : t("blackToMove");
+  return game.turn() === "w" ? t("whiteToMove") : t("blackToMove");
 }
 
 function isLocalRoom(roomId: string) {

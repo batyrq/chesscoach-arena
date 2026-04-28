@@ -3,8 +3,10 @@
 import { useState } from "react";
 import { Copy, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useI18n } from "@/lib/i18n";
 
 export function ShareRoomButton({ roomId }: { roomId: string }) {
+  const { t } = useI18n();
   const [copied, setCopied] = useState(false);
 
   async function copyInvite() {
@@ -17,7 +19,7 @@ export function ShareRoomButton({ roomId }: { roomId: string }) {
   return (
     <Button variant="secondary" onClick={copyInvite}>
       {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-      {copied ? "Copied invite" : "Share invite"}
+      {copied ? "Copied" : t("copyInvite")}
     </Button>
   );
 }

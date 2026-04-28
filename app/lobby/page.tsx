@@ -17,6 +17,7 @@ import type { City, PlayerProfile } from "@/lib/types";
 import { loadProfile, saveProfile } from "@/lib/storage";
 import { shortRoomCode } from "@/lib/utils";
 import { botProfiles, timeControls, type BotLevel, type PlayKind, type TimeControlId } from "@/lib/chess-play";
+import { localizeMode, useI18n } from "@/lib/i18n";
 
 const initialProStatus: ProStatus = { isPro: false, status: "free", plan: "free", provider: "local" };
 
@@ -29,6 +30,7 @@ export default function LobbyPage() {
 }
 
 function LobbyContent() {
+  const { t } = useI18n();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [name, setName] = useState("Guest Gambiteer");
@@ -130,11 +132,11 @@ function LobbyContent() {
           <p className="text-sm font-semibold uppercase tracking-[0.3em] text-[var(--mint)]">
             {friendMode ? "Friend room" : "Arena lobby"}
           </p>
-          <h1 className="mt-4 font-[var(--font-display)] text-5xl font-black leading-tight tracking-[-0.05em]">
-            Choose your arena.
+          <h1 className="mt-4 font-[var(--font-display)] text-4xl font-bold leading-tight tracking-[-0.03em]">
+            {t("chooseGame")}
           </h1>
-          <p className="mt-5 text-lg leading-8 text-slate-300">
-            Fast games, clean reviews, and city rankings. Train against a bot, challenge a friend, or play both sides.
+          <p className="mt-5 text-base leading-7 text-slate-300">
+            {t("lobbySubtitle")}
           </p>
           <div className="mt-6 grid gap-3 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
             <OnboardingProof icon={<MapPin className="h-4 w-4" />} label="City identity" value={city} />
@@ -150,25 +152,25 @@ function LobbyContent() {
         <Card className="p-6 md:p-8">
           <div className="grid gap-5">
             <label className="space-y-2">
-              <span className="text-sm font-semibold text-slate-200">Display name</span>
+              <span className="text-sm font-semibold text-slate-200">{t("displayName")}</span>
               <Input value={name} onChange={(event) => updateName(event.target.value)} placeholder="Your chess name" />
             </label>
             <label className="space-y-2">
-              <span className="text-sm font-semibold text-slate-200">City</span>
+              <span className="text-sm font-semibold text-slate-200">{t("city")}</span>
               <Select value={city} onChange={(event) => updateCity(event.target.value as City)}>
                 {cities.map((item) => <option key={item}>{item}</option>)}
               </Select>
             </label>
             <div>
-              <p className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-200"><Sparkles className="h-4 w-4 text-[var(--gold)]" /> Play</p>
+              <p className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-200"><Sparkles className="h-4 w-4 text-[var(--gold)]" /> {t("play")}</p>
               <div className="grid gap-3 md:grid-cols-3">
-                <PlayCard active={playKind === "friend"} icon={<Link2 className="h-4 w-4" />} title="Friend Room" body="Invite a player and race the clock." onClick={() => setPlayKind("friend")} />
-                <PlayCard active={playKind === "bot"} icon={<Bot className="h-4 w-4" />} title="Training Bot" body="Practice against a legal move bot." onClick={() => setPlayKind("bot")} />
-                <PlayCard active={playKind === "local"} icon={<MonitorPlay className="h-4 w-4" />} title="Same Device" body="Play both sides, then review." onClick={() => setPlayKind("local")} />
+                <PlayCard active={playKind === "friend"} icon={<Link2 className="h-4 w-4" />} title={t("friendRoom")} body="Invite a player and race the clock." onClick={() => setPlayKind("friend")} />
+                <PlayCard active={playKind === "bot"} icon={<Bot className="h-4 w-4" />} title={t("trainingBot")} body="Practice against a legal move bot." onClick={() => setPlayKind("bot")} />
+                <PlayCard active={playKind === "local"} icon={<MonitorPlay className="h-4 w-4" />} title={t("sameDevice")} body="Play both sides, then review." onClick={() => setPlayKind("local")} />
               </div>
             </div>
             <div>
-              <p className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-200"><Clock3 className="h-4 w-4 text-[var(--mint)]" /> Time Control</p>
+              <p className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-200"><Clock3 className="h-4 w-4 text-[var(--mint)]" /> {t("timeControl")}</p>
               <div className="grid grid-cols-4 gap-2">
                 {timeControls.map((item) => (
                   <button
@@ -178,7 +180,7 @@ function LobbyContent() {
                     className={`rounded-2xl border px-3 py-2 text-left text-sm transition ${timeControl === item.id ? "border-[var(--mint)] bg-[rgba(118,247,203,0.12)] text-white" : "border-white/10 bg-white/[0.04] text-slate-300 hover:bg-white/[0.08]"}`}
                   >
                     <span className="block font-[var(--font-display)] text-lg font-bold">{item.label}</span>
-                    <span className="text-[0.68rem] uppercase tracking-[0.16em] text-slate-500">{item.mode}</span>
+                    <span className="text-[0.68rem] tracking-[0.12em] text-slate-500">{localizeMode(item.mode, t)}</span>
                   </button>
                 ))}
               </div>
@@ -186,17 +188,17 @@ function LobbyContent() {
             {playKind === "bot" ? (
               <div className="grid gap-3 md:grid-cols-[1fr_auto]">
                 <label className="space-y-2">
-                  <span className="text-sm font-semibold text-slate-200">Bot level</span>
+                  <span className="text-sm font-semibold text-slate-200">{t("botLevel")}</span>
                   <Select value={botLevel} onChange={(event) => setBotLevel(event.target.value as BotLevel)}>
                     {Object.entries(botProfiles).map(([key, bot]) => <option key={key} value={key}>{bot.label} · {bot.name}</option>)}
                   </Select>
                   <p className="text-xs text-slate-500">{botProfiles[botLevel].tagline}</p>
                 </label>
                 <div className="space-y-2">
-                  <span className="text-sm font-semibold text-slate-200">Your color</span>
+                  <span className="text-sm font-semibold text-slate-200">{t("yourColor")}</span>
                   <div className="grid grid-cols-3 gap-2">
                     {(["white", "black", "random"] as const).map((color) => (
-                      <button key={color} type="button" onClick={() => setPlayerColor(color)} className={`rounded-2xl border px-4 py-2 text-sm font-semibold capitalize ${playerColor === color ? "border-[var(--gold)] bg-[rgba(248,200,106,0.12)] text-[var(--gold)]" : "border-white/10 bg-white/[0.04] text-slate-300"}`}>{color}</button>
+                      <button key={color} type="button" onClick={() => setPlayerColor(color)} className={`rounded-2xl border px-4 py-2 text-sm font-semibold ${playerColor === color ? "border-[var(--gold)] bg-[rgba(248,200,106,0.12)] text-[var(--gold)]" : "border-white/10 bg-white/[0.04] text-slate-300"}`}>{color === "white" ? t("white") : color === "black" ? t("black") : t("random")}</button>
                     ))}
                   </div>
                 </div>
@@ -204,7 +206,7 @@ function LobbyContent() {
             ) : null}
             <Button onClick={() => void startSelectedGame()} size="lg">
               {playKind === "friend" ? <Link2 className="h-4 w-4" /> : playKind === "bot" ? <Bot className="h-4 w-4" /> : <MonitorPlay className="h-4 w-4" />}
-              {playKind === "friend" ? "Create Friend Room" : playKind === "bot" ? "Play Training Bot" : "Play Same Device"}
+              {playKind === "friend" ? t("createFriendRoom") : playKind === "bot" ? t("playTrainingBot") : t("playSameDevice")}
             </Button>
             <CityRankPreview profile={playerProfile} city={city} mode={leaderboardMode} />
             <div className="rounded-[1.5rem] border border-[var(--gold)]/25 bg-[rgba(248,200,106,0.08)] p-4">

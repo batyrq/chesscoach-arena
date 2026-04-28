@@ -1,3 +1,5 @@
+ "use client";
+
 import Link from "next/link";
 import type React from "react";
 import { ArrowRight, Crosshair, Medal, ShieldCheck, Swords, Trophy } from "lucide-react";
@@ -6,16 +8,18 @@ import { CityLeaderboard } from "@/components/CityLeaderboard";
 import { ProUpgradeModal } from "@/components/ProUpgradeModal";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { useI18n } from "@/lib/i18n";
 
 export default function LeaderboardPage() {
+  const { t } = useI18n();
   return (
     <AppShell>
       <main className="mx-auto w-full max-w-7xl px-5 pb-16 md:px-8">
         <section className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr] lg:items-end">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-[var(--gold)]">City Arena</p>
-            <h1 className="mt-4 font-[var(--font-display)] text-5xl font-black leading-tight tracking-[-0.05em]">
-              City Arena Rankings
+            <p className="text-sm font-semibold tracking-[0.12em] text-[var(--gold)]">City Arena</p>
+            <h1 className="mt-4 font-[var(--font-display)] text-4xl font-bold leading-tight tracking-[-0.03em]">
+              {t("cityArenaRankings")}
             </h1>
             <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-300">
               Win games, review your mistakes, and climb your city leaderboard.
@@ -23,10 +27,10 @@ export default function LeaderboardPage() {
             <p className="mt-3 text-sm font-semibold text-slate-400">Your rank updates after reviewed games.</p>
             <div className="mt-7 flex flex-wrap gap-3">
               <Button asChild>
-                <Link href="/lobby">Play a Game <ArrowRight className="h-4 w-4" /></Link>
+                <Link href="/lobby">{t("playGame")} <ArrowRight className="h-4 w-4" /></Link>
               </Button>
               <Button asChild variant="secondary">
-                <Link href="/analysis/demo">Start Training</Link>
+                <Link href="/analysis/demo">{t("startTraining")}</Link>
               </Button>
               <ProUpgradeModal triggerLabel="Go Pro" />
             </div>

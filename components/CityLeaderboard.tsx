@@ -10,12 +10,14 @@ import { createLeaderboardAdapter } from "@/lib/leaderboard";
 import type { City, GameReviewRecord, LeaderboardEntry, PlayerProfile } from "@/lib/types";
 import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { useI18n } from "@/lib/i18n";
 
 type CityFilter = City | "All Cities";
 type BoardScope = "city" | "global";
 type TimeFilter = "all" | "week";
 
 export function CityLeaderboard() {
+  const { t } = useI18n();
   const [city, setCity] = useState<CityFilter>("Almaty");
   const [scope, setScope] = useState<BoardScope>("city");
   const [timeFilter, setTimeFilter] = useState<TimeFilter>("all");
@@ -120,10 +122,10 @@ export function CityLeaderboard() {
         </div>
 
         <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          <ArenaStat label="Your Rank" value={currentPlayer ? formatRank(currentCityRank) : "Guest"} detail={currentPlayer ? `in ${currentPlayer.city}` : "Create a profile"} icon={<MapPin className="h-4 w-4" />} />
+          <ArenaStat label={t("yourRank")} value={currentPlayer ? formatRank(currentCityRank) : "Guest"} detail={currentPlayer ? `in ${currentPlayer.city}` : "Create a profile"} icon={<MapPin className="h-4 w-4" />} />
           <ArenaStat label="Arena Rating" value={(currentEntry?.rating ?? totals.topRating).toString()} detail="All-time score" icon={<Trophy className="h-4 w-4" />} />
-          <ArenaStat label="Reviewed Games" value={(currentEntry?.reviews ?? totals.reviewedGames).toString()} detail="Coach-checked games" icon={<Search className="h-4 w-4" />} />
-          <ArenaStat label="Current Form" value={totals.streak ? `${totals.streak}x` : "Ready"} detail={`Coach Score ${currentEntry?.coachScore ?? totals.avgCoach}`} icon={<Flame className="h-4 w-4" />} />
+          <ArenaStat label={t("reviewedGames")} value={(currentEntry?.reviews ?? totals.reviewedGames).toString()} detail="Coach-checked games" icon={<Search className="h-4 w-4" />} />
+          <ArenaStat label={t("currentForm")} value={totals.streak ? `${totals.streak}x` : "Ready"} detail={`Coach Score ${currentEntry?.coachScore ?? totals.avgCoach}`} icon={<Flame className="h-4 w-4" />} />
         </div>
 
         {currentPlayer ? <CurrentPlayerCard player={currentPlayer} rank={currentCityRank} signedIn={signedIn} /> : <GuestProfileState />}

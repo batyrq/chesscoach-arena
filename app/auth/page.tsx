@@ -12,12 +12,14 @@ import { Select } from "@/components/ui/select";
 import { friendlyAuthError, getAuthView, linkAuthenticatedProfile } from "@/lib/auth";
 import { cities } from "@/lib/demo-data";
 import { getBrowserSupabaseClient } from "@/lib/supabase/client";
+import { useI18n } from "@/lib/i18n";
 import { loadProfile } from "@/lib/storage";
 import type { City } from "@/lib/types";
 
 type AuthMode = "signin" | "signup";
 
 export default function AuthPage() {
+  const { t } = useI18n();
   const router = useRouter();
   const [mode, setMode] = useState<AuthMode>("signin");
   const [email, setEmail] = useState("");
@@ -95,12 +97,12 @@ export default function AuthPage() {
     <AppShell>
       <main className="mx-auto grid min-h-[calc(100vh-96px)] w-full max-w-6xl items-center gap-8 px-5 pb-16 md:px-8 lg:grid-cols-[0.95fr_1.05fr]">
         <section>
-          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-[var(--mint)]">Player account</p>
-          <h1 className="mt-4 font-[var(--font-display)] text-5xl font-black leading-tight tracking-[-0.05em]">
-            Save your coach history and keep your city rank.
+          <p className="text-sm font-semibold tracking-[0.12em] text-[var(--mint)]">{t("playerAccount")}</p>
+          <h1 className="mt-4 font-[var(--font-display)] text-4xl font-bold leading-tight tracking-[-0.03em]">
+            {t("authTitle")}
           </h1>
-          <p className="mt-5 text-lg leading-8 text-slate-300">
-            Sign up for the demo account path, sync Pro status across devices, and keep your leaderboard progress beyond a single browser.
+          <p className="mt-5 text-base leading-7 text-slate-300">
+            {t("authSubtitle")}
           </p>
           <div className="mt-6 grid gap-3 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
             <Proof icon={<ShieldCheck className="h-4 w-4" />} label="No email gate" value="Demo starts immediately" />
@@ -115,35 +117,35 @@ export default function AuthPage() {
               onClick={() => setMode("signin")}
               type="button"
             >
-              Sign in
+              {t("signIn")}
             </button>
             <button
               className={`rounded-full px-4 py-2 text-sm font-semibold transition ${mode === "signup" ? "bg-[var(--gold)] text-slate-950" : "text-slate-300 hover:text-white"}`}
               onClick={() => setMode("signup")}
               type="button"
             >
-              Sign up
+              {t("signUp")}
             </button>
           </div>
 
           <form className="mt-6 grid gap-4" onSubmit={(event) => void submit(event)}>
             <label className="space-y-2">
-              <span className="flex items-center gap-2 text-sm font-semibold text-slate-200"><Mail className="h-4 w-4 text-[var(--mint)]" /> Email</span>
+              <span className="flex items-center gap-2 text-sm font-semibold text-slate-200"><Mail className="h-4 w-4 text-[var(--mint)]" /> {t("email")}</span>
               <Input value={email} onChange={(event) => setEmail(event.target.value)} type="email" placeholder="you@example.com" required />
             </label>
             <label className="space-y-2">
-              <span className="flex items-center gap-2 text-sm font-semibold text-slate-200"><LockKeyhole className="h-4 w-4 text-[var(--mint)]" /> Password</span>
+              <span className="flex items-center gap-2 text-sm font-semibold text-slate-200"><LockKeyhole className="h-4 w-4 text-[var(--mint)]" /> {t("password")}</span>
               <Input value={password} onChange={(event) => setPassword(event.target.value)} type="password" placeholder="At least 6 characters" required minLength={6} />
             </label>
 
             {mode === "signup" ? (
               <div className="grid gap-4 sm:grid-cols-2">
                 <label className="space-y-2">
-                  <span className="flex items-center gap-2 text-sm font-semibold text-slate-200"><UserRound className="h-4 w-4 text-[var(--gold)]" /> Display name</span>
+                  <span className="flex items-center gap-2 text-sm font-semibold text-slate-200"><UserRound className="h-4 w-4 text-[var(--gold)]" /> {t("displayName")}</span>
                   <Input value={displayName} onChange={(event) => setDisplayName(event.target.value)} placeholder="Your chess name" />
                 </label>
                 <label className="space-y-2">
-                  <span className="flex items-center gap-2 text-sm font-semibold text-slate-200"><MapPin className="h-4 w-4 text-[var(--gold)]" /> City</span>
+                  <span className="flex items-center gap-2 text-sm font-semibold text-slate-200"><MapPin className="h-4 w-4 text-[var(--gold)]" /> {t("city")}</span>
                   <Select value={city} onChange={(event) => setCity(event.target.value as City)}>
                     {cities.map((item) => <option key={item}>{item}</option>)}
                   </Select>
@@ -160,7 +162,7 @@ export default function AuthPage() {
             {error ? <p className="rounded-[1.25rem] border border-[var(--coral)]/30 bg-[rgba(255,127,127,0.08)] p-4 text-sm leading-6 text-slate-200">{error}</p> : null}
 
             <Button size="lg" disabled={loading || !configured}>
-              {loading ? "Syncing..." : mode === "signup" ? "Create demo account" : "Sign in and sync"}
+              {loading ? "..." : mode === "signup" ? t("createDemoAccount") : t("signInAndSync")}
             </Button>
             <p className="text-xs leading-5 text-slate-500">
               For the demo, signup starts immediately without email confirmation. If a confirmation step appears, ask the project owner to turn it off for demo mode.

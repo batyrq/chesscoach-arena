@@ -6,12 +6,12 @@ const files = ["a", "b", "c", "d", "e", "f", "g", "h"] as const;
 const ranks = ["8", "7", "6", "5", "4", "3", "2", "1"] as const;
 
 const pieces: Record<string, string> = {
-  K: "\u2654",
-  Q: "\u2655",
-  R: "\u2656",
-  B: "\u2657",
-  N: "\u2658",
-  P: "\u2659",
+  K: "\u265A",
+  Q: "\u265B",
+  R: "\u265C",
+  B: "\u265D",
+  N: "\u265E",
+  P: "\u265F",
   k: "\u265A",
   q: "\u265B",
   r: "\u265C",
@@ -46,11 +46,10 @@ export function ChessBoardPanel({ fen, onDrop, locked, orientation = "white" }: 
   }
 
   return (
-    <div className="relative mx-auto w-full max-w-[min(86vw,620px)] rounded-[2rem] border border-white/10 bg-slate-950/60 p-3 shadow-[0_35px_100px_rgba(0,0,0,0.45)]">
-      <div className="absolute -inset-4 -z-10 rounded-[2.5rem] bg-[radial-gradient(circle,rgba(118,247,203,0.18),transparent_62%)] blur-2xl" />
+    <div className="relative mx-auto w-full max-w-[min(88vw,620px)] rounded-2xl border border-white/10 bg-stone-950/70 p-2.5 shadow-[0_24px_70px_rgba(0,0,0,0.38)]">
       <div
         data-testid="chess-board"
-        className="grid aspect-square grid-cols-8 grid-rows-8 overflow-hidden rounded-[1.35rem] border border-white/10 bg-slate-950"
+        className="grid aspect-square grid-cols-8 grid-rows-8 overflow-hidden rounded-xl border border-black/40 bg-stone-950"
         style={{
           gridTemplateColumns: "repeat(8, minmax(0, 1fr))",
           gridTemplateRows: "repeat(8, minmax(0, 1fr))"
@@ -69,12 +68,16 @@ export function ChessBoardPanel({ fen, onDrop, locked, orientation = "white" }: 
               data-square={square}
               disabled={locked}
               onClick={() => handleSquareClick(square, piece)}
-              className={`relative flex items-center justify-center text-[clamp(1.9rem,7vw,4.1rem)] leading-none transition duration-150 ${light ? "bg-[#d7c49e]" : "bg-[#315065]"} ${selected ? "ring-4 ring-inset ring-[var(--mint)]" : ""} ${locked ? "cursor-default" : "hover:brightness-110 active:scale-[0.98]"}`}
+              className={`relative flex items-center justify-center text-[clamp(2rem,7vw,4.25rem)] leading-none transition duration-150 ${light ? "bg-[var(--board-light)]" : "bg-[var(--board-dark)]"} ${selected ? "ring-4 ring-inset ring-[var(--gold)]" : ""} ${locked ? "cursor-default" : "hover:brightness-105 active:scale-[0.98]"}`}
               aria-label={`${square}${piece ? ` ${pieceName(piece)}` : ""}`}
             >
-              {rowIndex === 7 ? <span className={`absolute bottom-1 right-1 text-[0.6rem] font-bold uppercase ${light ? "text-slate-900/55" : "text-slate-100/55"}`}>{displayFiles[colIndex]}</span> : null}
-              {colIndex === 0 ? <span className={`absolute left-1 top-1 text-[0.6rem] font-bold ${light ? "text-slate-900/55" : "text-slate-100/55"}`}>{displayRanks[rowIndex]}</span> : null}
-              <span className={piece ? getPieceClass(piece) : ""}>
+              {rowIndex === 7 ? <span className={`pointer-events-none absolute bottom-1 right-1 text-[0.58rem] font-semibold uppercase ${light ? "text-stone-800/55" : "text-stone-50/60"}`}>{displayFiles[colIndex]}</span> : null}
+              {colIndex === 0 ? <span className={`pointer-events-none absolute left-1 top-1 text-[0.58rem] font-semibold ${light ? "text-stone-800/55" : "text-stone-50/60"}`}>{displayRanks[rowIndex]}</span> : null}
+              <span
+                data-piece-color={piece ? getPieceColor(piece) : undefined}
+                className={piece ? getPieceClass(piece) : ""}
+                style={piece ? getPieceStyle(piece) : undefined}
+              >
                 {piece ? pieces[piece] : ""}
               </span>
             </button>
@@ -115,10 +118,19 @@ function orientBoard(board: Array<Array<string | null>>, orientation: "white" | 
 }
 
 function getPieceClass(piece: string) {
-  const isWhite = piece === piece.toUpperCase();
-  return isWhite
-    ? "text-slate-50 drop-shadow-[0_2px_1px_rgba(15,23,42,0.9)] [text-shadow:_0_0_2px_rgba(15,23,42,0.9)]"
-    : "text-slate-950 drop-shadow-[0_1px_1px_rgba(255,255,255,0.45)] [text-shadow:_0_0_2px_rgba(255,255,255,0.45)]";
+  return piece === piece.toUpperCase()
+    ? "select-none font-serif text-[#f8f4e8] drop-shadow-[0_2px_1px_rgba(33,22,14,0.9)]"
+    : "select-none font-serif text-[#17120d] drop-shadow-[0_1px_1px_rgba(255,244,214,0.6)]";
+}
+
+function getPieceStyle(piece: string) {
+  return piece === piece.toUpperCase()
+    ? { color: "#f8f4e8", WebkitTextStroke: "0.6px rgba(32, 24, 16, 0.8)", textShadow: "0 1px 2px rgba(0,0,0,0.85)" }
+    : { color: "#17120d", WebkitTextStroke: "0.35px rgba(255, 244, 214, 0.62)", textShadow: "0 1px 1px rgba(255,255,255,0.45)" };
+}
+
+function getPieceColor(piece: string) {
+  return piece === piece.toUpperCase() ? "white" : "black";
 }
 
 function pieceName(piece: string) {

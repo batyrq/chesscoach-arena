@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { ArrowRight, Brain, Brush, Link2, Map, MoveUpRight, ShieldCheck, Trophy, Zap } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
@@ -5,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ProUpgradeModal } from "@/components/ProUpgradeModal";
 import { leaderboardPlayers } from "@/lib/demo-data";
+import { useI18n } from "@/lib/i18n";
 
 const features = [
   { title: "AI Coach", icon: Brain, body: "A post-game review that turns one messy game into clear training priorities." },
@@ -14,6 +17,7 @@ const features = [
 ];
 
 export default function LandingPage() {
+  const { t } = useI18n();
   const topCities = [
     { city: "Almaty", score: 94, players: 128 },
     { city: "Astana", score: 89, players: 101 },
@@ -27,13 +31,13 @@ export default function LandingPage() {
         <section className="grid items-center gap-10 lg:grid-cols-[1.08fr_0.92fr]">
           <div>
             <div className="inline-flex rounded-full border border-white/10 bg-white/[0.06] px-4 py-2 text-sm text-slate-300">
-              Built for students who want receipts after every game
+              {t("lobbyKicker")}
             </div>
-            <h1 className="mt-6 max-w-4xl font-[var(--font-display)] text-5xl font-black leading-[0.95] tracking-[-0.06em] md:text-7xl">
-              Play chess. Get coached. Climb your city leaderboard.
+            <h1 className="mt-6 max-w-4xl font-[var(--font-display)] text-4xl font-bold leading-tight tracking-[-0.03em] md:text-6xl">
+              {t("landingTitle")}
             </h1>
             <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-300">
-              ChessCoach Arena turns friend matches into focused training loops with legal play, instant review, local pride, and a Pro path that feels real enough to demo today.
+              {t("landingSubtitle")}
             </p>
             <div className="mt-6 grid max-w-2xl grid-cols-3 gap-3">
               <HeroMetric value="30s" label="to first move" />
@@ -42,14 +46,14 @@ export default function LandingPage() {
             </div>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Button asChild href="/lobby" size="lg">
-                Start Game <ArrowRight className="h-4 w-4" />
+                {t("startGame")} <ArrowRight className="h-4 w-4" />
               </Button>
               <Button asChild href="/pro" variant="secondary" size="lg">
-                See Pro Demo
+                {t("seeProDemo")}
               </Button>
             </div>
             <p className="mt-4 text-sm text-slate-400">
-              Best demo path: start local, play a short game, then open the AI Coach review.
+              {t("bestDemoPath")}
             </p>
             <div className="mt-10 grid gap-3 sm:grid-cols-4">
               {["Friend rooms", "AI review", "City leaderboard", "Pro path"].map((item) => (
@@ -152,7 +156,7 @@ function CoachPreview({ title, body }: { title: string; body: string }) {
 }
 
 function HeroBoard() {
-  const pieces = ["♜", "♞", "♝", "♛", "♚", "♝", "♞", "♜", "♟", "♟", "♟", "♟", "", "♟", "♟", "♟", "", "", "", "", "♟", "", "", "", "", "", "", "♙", "", "", "", "", "", "", "♘", "", "", "", "", "", "", "", "♙", "", "♙", "♙", "♙", "♙", "♙", "♙", "", "♙", "", "♙", "", "", "♖", "", "♗", "♕", "♔", "♗", "♘", "♖"];
+  const pieces = ["♜", "♞", "♝", "♛", "♚", "♝", "♞", "♜", "♟", "♟", "♟", "♟", "", "♟", "♟", "♟", "", "", "", "", "♟", "", "", "", "", "", "", "♟", "", "", "", "", "", "", "♞", "", "", "", "", "", "", "", "♟", "", "♟", "♟", "♟", "♟", "♟", "♟", "", "♟", "", "♟", "", "", "♜", "", "♝", "♛", "♚", "♝", "♞", "♜"];
 
   return (
     <div className="glass relative overflow-hidden rounded-[2.5rem] p-5">
@@ -163,7 +167,7 @@ function HeroBoard() {
         {Array.from({ length: 64 }).map((_, index) => {
           const dark = (Math.floor(index / 8) + index) % 2 === 1;
           return (
-            <div key={index} className={`flex aspect-square items-center justify-center text-3xl ${dark ? "bg-[#315065]" : "bg-[#d7c49e] text-slate-950"}`}>
+            <div key={index} className={`flex aspect-square items-center justify-center text-3xl ${dark ? "bg-[var(--board-dark)]" : "bg-[var(--board-light)]"} ${index < 24 ? "text-[#17120d]" : "text-[#f8f4e8] [text-shadow:_0_1px_2px_rgba(0,0,0,0.85)]"}`}>
               {pieces[index]}
             </div>
           );
