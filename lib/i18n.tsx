@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useMemo, useState } from "react";
+import { createContext, useContext, useMemo, useSyncExternalStore } from "react";
 
 export type Locale = "ru" | "en";
 
@@ -315,17 +315,13 @@ type I18nContextValue = {
 const I18nContext = createContext<I18nContextValue | null>(null);
 
 export function I18nProvider({ children }: { children: React.ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>(() => {
-    if (typeof window === "undefined") return "ru";
-    const stored = window.localStorage.getItem(localeKey);
-    return stored === "ru" || stored === "en" ? stored : "ru";
-  });
+  const locale = useSyncExternalStore(subscribeLocale, getClientLocale, getServerLocale);
 
   const value = useMemo<I18nContextValue>(() => ({
     locale,
     setLocale(nextLocale) {
-      setLocaleState(nextLocale);
       window.localStorage.setItem(localeKey, nextLocale);
+      window.dispatchEvent(new Event("chesscoach:locale"));
     },
     t(key) {
       return dictionaries[locale][key] ?? dictionaries.en[key] ?? key;
@@ -333,6 +329,29 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
   }), [locale]);
 
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
+}
+
+function subscribeLocale(callback: () => void) {
+  if (typeof window === "undefined") return () => undefined;
+  const handleStorage = (event: StorageEvent) => {
+    if (event.key === localeKey) callback();
+  };
+  window.addEventListener("storage", handleStorage);
+  window.addEventListener("chesscoach:locale", callback);
+  return () => {
+    window.removeEventListener("storage", handleStorage);
+    window.removeEventListener("chesscoach:locale", callback);
+  };
+}
+
+function getClientLocale(): Locale {
+  if (typeof window === "undefined") return "ru";
+  const stored = window.localStorage.getItem(localeKey);
+  return stored === "ru" || stored === "en" ? stored : "ru";
+}
+
+function getServerLocale(): Locale {
+  return "ru";
 }
 
 export function useI18n() {

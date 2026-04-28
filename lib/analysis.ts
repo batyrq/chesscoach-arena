@@ -225,7 +225,7 @@ function buildCriticalExplanation(evaluation: MoveEvaluation, betterReason?: str
     return `${evaluation.san} let a minor piece or rook become vulnerable. ${betterReason ?? "Development first was cleaner."}`;
   }
 
-  return `${evaluation.san} was playable, but the engine-lite scan found a more forcing candidate: ${betterReason ?? "there was a cleaner improving move."}`;
+  return `${evaluation.san} was playable, but the review found a more forcing candidate: ${betterReason ?? "there was a cleaner improving move."}`;
 }
 
 function classifyMove(swing: number, move: ChessMove, missedCapture: { san: string; score: number } | undefined, bestCandidate: { score: number } | null, opportunityCost: number): MoveEvaluation["quality"] {
@@ -350,7 +350,7 @@ function buildDrill(criticalMoment: CriticalMoment | null, evaluations: MoveEval
 }
 
 function explainBetterMove(moment: CriticalMoment) {
-  return `${moment.betterMove} is legal in the original position and scores better in the engine-lite scan because it improves the immediate tactic without leaving the same material target behind.`;
+  return `${moment.betterMove} is legal in the original position and scores better in the coach review because it improves the immediate tactic without leaving the same material target behind.`;
 }
 
 function pieceName(piece: string) {
