@@ -2,21 +2,30 @@
 
 :root {
   color-scheme: dark;
-  --background: #171411;
-  --foreground: #f7f1e7;
-  --muted: #b8ad9f;
-  --panel: rgba(36, 31, 25, 0.86);
-  --panel-strong: rgba(28, 24, 20, 0.96);
-  --border: rgba(229, 213, 184, 0.14);
-  --gold: #d6ad63;
-  --mint: #7fa36a;
-  --coral: #d26d59;
+  --background: #16120f;
+  --foreground: #f5efe4;
+  --muted: #b7aa99;
+  --panel: rgba(37, 31, 25, 0.88);
+  --panel-strong: rgba(28, 23, 19, 0.96);
+  --surface-soft: rgba(255, 255, 255, 0.045);
+  --surface-raised: rgba(255, 255, 255, 0.07);
+  --border: rgba(231, 215, 186, 0.13);
+  --gold: #d4aa5e;
+  --mint: #86a86f;
+  --mint-strong: #a5c487;
+  --coral: #d46e59;
+  --red-soft: #b65342;
   --blue: #8da7ad;
-  --walnut: #6d4c33;
+  --walnut: #6b4a31;
+  --cream: #f1dfbf;
   --board-light: #e8d7b4;
-  --board-dark: #779657;
-  --board-last: rgba(214, 173, 99, 0.54);
-  --board-move: rgba(32, 46, 29, 0.32);
+  --board-dark: #77915d;
+  --board-last: rgba(212, 170, 94, 0.5);
+  --board-select: rgba(245, 202, 103, 0.84);
+  --board-move: rgba(28, 38, 24, 0.28);
+  --shadow-soft: 0 12px 30px rgba(0, 0, 0, 0.24);
+  --shadow-card: 0 16px 38px rgba(0, 0, 0, 0.22);
+  --radius-card: 14px;
 }
 
 * {
@@ -30,10 +39,11 @@ html {
 body {
   min-height: 100vh;
   background:
-    linear-gradient(180deg, rgba(127, 163, 106, 0.08), transparent 22rem),
-    linear-gradient(145deg, #12100e 0%, #1d1813 50%, #141713 100%);
+    radial-gradient(circle at 50% -20%, rgba(134, 168, 111, 0.11), transparent 28rem),
+    linear-gradient(145deg, #12100e 0%, #1b1612 52%, #151811 100%);
   color: var(--foreground);
   font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: 0;
 }
 
 a {
@@ -50,7 +60,7 @@ select {
 .glass {
   border: 1px solid var(--border);
   background: linear-gradient(145deg, rgba(36, 31, 25, 0.9), rgba(24, 21, 17, 0.82));
-  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.26);
+  box-shadow: var(--shadow-card);
   backdrop-filter: blur(10px);
 }
 
@@ -76,11 +86,29 @@ select {
 .arena-panel {
   border: 1px solid var(--border);
   background: var(--panel);
-  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.22);
+  box-shadow: var(--shadow-card);
 }
 
 .arena-badge {
   border: 1px solid rgba(229, 213, 184, 0.14);
   background: rgba(255, 255, 255, 0.055);
   color: #d8cec0;
+}
+
+.app-section-label {
+  color: var(--mint-strong);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.progress-track {
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--mint), var(--gold));
 }

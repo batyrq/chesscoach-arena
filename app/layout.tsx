@@ -1,16 +1,16 @@
 import type { Metadata } from "next";
-import { Space_Grotesk, Sora } from "next/font/google";
+import { Inter, Manrope } from "next/font/google";
 import { I18nProvider } from "@/lib/i18n";
 import "./globals.css";
 
-const spaceGrotesk = Space_Grotesk({
+const manrope = Manrope({
   variable: "--font-display",
-  subsets: ["latin"]
+  subsets: ["latin", "cyrillic"]
 });
 
-const sora = Sora({
+const inter = Inter({
   variable: "--font-sans",
-  subsets: ["latin"]
+  subsets: ["latin", "cyrillic"]
 });
 
 export const metadata: Metadata = {
@@ -25,7 +25,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${spaceGrotesk.variable} ${sora.variable}`}>
+      <body className={`${manrope.variable} ${inter.variable}`}>
         <I18nProvider>{children}</I18nProvider>
       </body>
     </html>

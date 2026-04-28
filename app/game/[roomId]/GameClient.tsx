@@ -294,11 +294,19 @@ export function GameClient({ roomId }: { roomId: string }) {
           </div>
           <GameStatusBanner status={status} intense={intense} />
           {moveError ? <GameStatusBanner status={moveError} intense /> : null}
+          <div className="xl:hidden">
+            <PlayerCard player={players[1]} active={game.turn() === "b" && !ended} clockSeconds={blackClock} statusLabel={getPlayerStatus(roomState, "black", isLocalGame, isBotGame, userColor, t)} />
+          </div>
           <ArenaHud white={players[0]} black={players[1]} turnName={turnPlayer.name} moves={moves.length} roomId={roomId} onCoachStarter={playCoachStarter} canUseStarter={(isLocalRoom(roomId) || canMove) && !isBotGame} roleLabel={roleLabel} botThinking={botThinking} />
           <ChessBoardPanel fen={game.fen()} onDrop={onDrop} locked={ended || game.isGameOver() || !canMove} orientation={boardOrientation} lastMove={moves.at(-1) ?? null} />
+          <div className="xl:hidden">
+            <PlayerCard player={players[0]} active={game.turn() === "w" && !ended} clockSeconds={whiteClock} statusLabel={getPlayerStatus(roomState, "white", isLocalGame, isBotGame, userColor, t)} />
+          </div>
         </section>
         <aside className="space-y-4">
-          <PlayerCard player={players[1]} active={game.turn() === "b" && !ended} clockSeconds={blackClock} statusLabel={getPlayerStatus(roomState, "black", isLocalGame, isBotGame, userColor, t)} />
+          <div className="hidden xl:block">
+            <PlayerCard player={players[1]} active={game.turn() === "b" && !ended} clockSeconds={blackClock} statusLabel={getPlayerStatus(roomState, "black", isLocalGame, isBotGame, userColor, t)} />
+          </div>
           <Card className="p-5">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="font-[var(--font-display)] text-xl font-bold">{t("scoreSheet")}</h2>
@@ -327,7 +335,9 @@ export function GameClient({ roomId }: { roomId: string }) {
               </Button>
             ) : null}
           </Card>
-          <PlayerCard player={players[0]} active={game.turn() === "w" && !ended} clockSeconds={whiteClock} statusLabel={getPlayerStatus(roomState, "white", isLocalGame, isBotGame, userColor, t)} />
+          <div className="hidden xl:block">
+            <PlayerCard player={players[0]} active={game.turn() === "w" && !ended} clockSeconds={whiteClock} statusLabel={getPlayerStatus(roomState, "white", isLocalGame, isBotGame, userColor, t)} />
+          </div>
           <Link href="/leaderboard" className="block rounded-[1.5rem] border border-white/10 bg-white/[0.05] p-4 text-sm text-slate-300 transition hover:bg-white/[0.09]">
             {locale === "ru" ? "Откройте разбор партии, чтобы обновить рейтинг. Войдите, чтобы сохранить прогресс." : "Open Game Review to update your ranking. Sign in to keep progress across devices."}
           </Link>

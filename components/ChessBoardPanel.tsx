@@ -9,12 +9,16 @@ const ranks = ["8", "7", "6", "5", "4", "3", "2", "1"] as const;
 type ChessBoardPanelProps = {
   fen: string;
   onDrop?: (sourceSquare: string, targetSquare: string) => boolean;
+  onSquareClick?: (square: string, piece: string | null) => void;
   locked?: boolean;
   orientation?: "white" | "black";
   lastMove?: { from: string; to: string } | null;
+  selectedSquares?: string[];
+  correctSquares?: string[];
+  incorrectSquares?: string[];
 };
 
-export function ChessBoardPanel({ fen, onDrop, locked, orientation = "white", lastMove }: ChessBoardPanelProps) {
+export function ChessBoardPanel({ fen, onDrop, onSquareClick, locked, orientation = "white", lastMove, selectedSquares = [], correctSquares = [], incorrectSquares = [] }: ChessBoardPanelProps) {
   const [selectedSquare, setSelectedSquare] = useState<string | null>(null);
   const board = orientBoard(parseFenBoard(fen), orientation);
   const displayFiles = orientation === "white" ? files : [...files].reverse();
@@ -30,6 +34,7 @@ export function ChessBoardPanel({ fen, onDrop, locked, orientation = "white", la
   }, [fen, locked, selectedSquare]);
 
   function handleSquareClick(square: string, piece: string | null) {
+    onSquareClick?.(square, piece);
     if (locked || !onDrop) return;
 
     if (!selectedSquare) {
@@ -42,7 +47,7 @@ export function ChessBoardPanel({ fen, onDrop, locked, orientation = "white", la
   }
 
   return (
-    <div className="relative mx-auto w-full max-w-[min(92vw,660px)] rounded-xl border border-black/45 bg-[#2a2119] p-2 shadow-[0_22px_46px_rgba(0,0,0,0.34)]">
+    <div className="relative mx-auto w-full max-w-[min(92vw,660px)] rounded-xl border border-black/45 bg-[#2a2119] p-1.5 shadow-[0_18px_38px_rgba(0,0,0,0.32)] sm:p-2">
       <div
         data-testid="chess-board"
         className="grid aspect-square grid-cols-8 grid-rows-8 overflow-hidden rounded-lg border border-black/55 bg-stone-950"
@@ -55,6 +60,9 @@ export function ChessBoardPanel({ fen, onDrop, locked, orientation = "white", la
           const square = `${displayFiles[colIndex]}${displayRanks[rowIndex]}`;
           const light = (rowIndex + colIndex) % 2 === 0;
           const selected = selectedSquare === square;
+          const quizSelected = selectedSquares.includes(square);
+          const quizCorrect = correctSquares.includes(square);
+          const quizIncorrect = incorrectSquares.includes(square);
           const last = lastMove?.from === square || lastMove?.to === square;
           const legal = legalTargets.has(square);
 
@@ -64,15 +72,17 @@ export function ChessBoardPanel({ fen, onDrop, locked, orientation = "white", la
               type="button"
               data-testid="chess-square"
               data-square={square}
-              disabled={locked}
+              data-piece-code={piece ? getPieceCode(piece) : undefined}
+              data-piece-color={piece ? getPieceColor(piece) : undefined}
+              disabled={locked && !onSquareClick}
               onClick={() => handleSquareClick(square, piece)}
-              className={`relative flex items-center justify-center leading-none transition duration-150 ${light ? "bg-[var(--board-light)]" : "bg-[var(--board-dark)]"} ${selected ? "ring-4 ring-inset ring-[#f0c15f]" : ""} ${locked ? "cursor-default" : "hover:brightness-105 active:scale-[0.99]"}`}
+              className={`relative flex items-center justify-center leading-none transition duration-150 ${light ? "bg-[var(--board-light)]" : "bg-[var(--board-dark)]"} ${selected || quizSelected ? "ring-4 ring-inset ring-[var(--board-select)]" : ""} ${quizCorrect ? "ring-4 ring-inset ring-[var(--mint-strong)]" : ""} ${quizIncorrect ? "ring-4 ring-inset ring-[var(--coral)]" : ""} ${locked && !onSquareClick ? "cursor-default" : "hover:brightness-105 active:scale-[0.99]"}`}
               aria-label={`${square}${piece ? ` ${pieceName(piece)}` : ""}`}
             >
               {last ? <span className="pointer-events-none absolute inset-0 bg-[var(--board-last)] mix-blend-multiply" /> : null}
-              {legal ? <span className={`pointer-events-none absolute rounded-full ${piece ? "inset-[18%] border-[5px] border-black/25" : "h-[24%] w-[24%] bg-black/24"}`} /> : null}
-              {rowIndex === 7 ? <span className={`pointer-events-none absolute bottom-1 right-1 z-10 text-[0.62rem] font-bold uppercase ${light ? "text-stone-800/55" : "text-stone-50/65"}`}>{displayFiles[colIndex]}</span> : null}
-              {colIndex === 0 ? <span className={`pointer-events-none absolute left-1 top-1 z-10 text-[0.62rem] font-bold ${light ? "text-stone-800/55" : "text-stone-50/65"}`}>{displayRanks[rowIndex]}</span> : null}
+              {legal ? <span className={`pointer-events-none absolute rounded-full ${piece ? "inset-[16%] border-[4px] border-black/28" : "h-[22%] w-[22%] bg-black/25 shadow-[0_0_0_2px_rgba(255,255,255,0.12)]"}`} /> : null}
+              {rowIndex === 7 ? <span className={`pointer-events-none absolute bottom-0.5 right-1 z-10 text-[0.58rem] font-bold ${light ? "text-stone-800/50" : "text-stone-50/62"}`}>{displayFiles[colIndex]}</span> : null}
+              {colIndex === 0 ? <span className={`pointer-events-none absolute left-1 top-0.5 z-10 text-[0.58rem] font-bold ${light ? "text-stone-800/50" : "text-stone-50/62"}`}>{displayRanks[rowIndex]}</span> : null}
               {piece ? <PieceSvg piece={piece} /> : null}
             </button>
           );
@@ -122,9 +132,11 @@ function getPieceCode(piece: string) {
 function PieceSvg({ piece }: { piece: string }) {
   const color = getPieceColor(piece);
   const type = piece.toLowerCase();
-  const fill = color === "white" ? "#fff6e5" : "#151515";
-  const stroke = color === "white" ? "#4f4030" : "#ead7b4";
-  const accent = color === "white" ? "#fffdf5" : "#2d2d2d";
+  const fill = color === "white" ? "#fff3dc" : "#171513";
+  const stroke = color === "white" ? "#443626" : "#3a3027";
+  const accent = color === "white" ? "#f8e5bd" : "#2f2924";
+  const highlight = color === "white" ? "#fffaf0" : "#29251f";
+  const strokeWidth = color === "white" ? 3.4 : 2.1;
 
   return (
     <svg
@@ -132,18 +144,18 @@ function PieceSvg({ piece }: { piece: string }) {
       data-piece-code={getPieceCode(piece)}
       data-piece-color={color}
       viewBox="0 0 100 100"
-      className="pointer-events-none z-10 h-[82%] w-[82%] select-none"
-      style={{ filter: color === "white" ? "drop-shadow(0 3px 2px rgba(36, 24, 15, 0.65))" : "drop-shadow(0 2px 1px rgba(255, 239, 206, 0.36)) drop-shadow(0 4px 3px rgba(0,0,0,0.35))" }}
+      className="pointer-events-none z-10 h-[90%] w-[90%] select-none"
+      style={{ filter: color === "white" ? "drop-shadow(0 3px 2px rgba(35, 24, 16, 0.58))" : "drop-shadow(0 1px 0 rgba(255, 233, 188, 0.16)) drop-shadow(0 4px 3px rgba(0,0,0,0.42))" }}
     >
-      <g fill={fill} stroke={stroke} strokeLinecap="round" strokeLinejoin="round" strokeWidth="4.5">
-        <path d="M24 86h52l-4-12H28z" />
-        <path d="M31 74h38l-3-10H34z" />
+      <g fill={fill} stroke={stroke} strokeLinecap="round" strokeLinejoin="round" strokeWidth={strokeWidth}>
+        <path d="M22 86h56l-4.5-10.5h-47z" />
+        <path d="M30 75.5h40l-3.2-9.5H33.2z" />
         {type === "p" ? <Pawn /> : null}
         {type === "r" ? <Rook /> : null}
-        {type === "n" ? <Knight accent={accent} /> : null}
-        {type === "b" ? <Bishop accent={accent} /> : null}
-        {type === "q" ? <Queen accent={accent} /> : null}
-        {type === "k" ? <King /> : null}
+        {type === "n" ? <Knight accent={accent} highlight={highlight} /> : null}
+        {type === "b" ? <Bishop accent={accent} highlight={highlight} /> : null}
+        {type === "q" ? <Queen accent={accent} highlight={highlight} /> : null}
+        {type === "k" ? <King highlight={highlight} /> : null}
       </g>
     </svg>
   );
@@ -152,8 +164,8 @@ function PieceSvg({ piece }: { piece: string }) {
 function Pawn() {
   return (
     <>
-      <circle cx="50" cy="30" r="12" />
-      <path d="M38 64c2-14 5-22 12-22s10 8 12 22z" />
+      <circle cx="50" cy="29" r="12.2" />
+      <path d="M37 66c1.7-14.5 6-23.5 13-23.5S61.3 51.5 63 66z" />
     </>
   );
 }
@@ -161,50 +173,54 @@ function Pawn() {
 function Rook() {
   return (
     <>
-      <path d="M30 22h10v9h10v-9h10v9h10v-9h6v19H24V22z" />
-      <path d="M31 64h38l-5-24H36z" />
+      <path d="M27 21h12v9h8v-9h8v9h8v-9h10v20H27z" />
+      <path d="M32 66h36l-5-25H37z" />
     </>
   );
 }
 
-function Knight({ accent }: { accent: string }) {
+function Knight({ accent, highlight }: { accent: string; highlight: string }) {
   return (
     <>
-      <path d="M31 65c4-17 10-29 24-43 9 6 16 16 18 30l-9 6-12-9-7 16z" />
-      <circle cx="55" cy="34" r="2.7" fill={accent} stroke="none" />
+      <path d="M30 66c2.6-15.5 9.5-30.5 24-45 8.8 4.2 16.8 14 19 28.5l-9.8 8.7-12.5-8.8-6.2 16.6z" />
+      <path d="M43 35c5 1.2 9.6 0 14-4.3" fill="none" stroke={highlight} strokeWidth="2.2" />
+      <circle cx="56" cy="35" r="2.4" fill={accent} stroke="none" />
     </>
   );
 }
 
-function Bishop({ accent }: { accent: string }) {
+function Bishop({ accent, highlight }: { accent: string; highlight: string }) {
   return (
     <>
-      <path d="M38 64c1-14 6-24 12-32 6 8 11 18 12 32z" />
-      <circle cx="50" cy="24" r="10" />
-      <path d="M50 18v28" stroke={accent} strokeWidth="3" />
+      <path d="M37 66c1.2-15.5 6.2-25.8 13-34.5 6.8 8.7 11.8 19 13 34.5z" />
+      <circle cx="50" cy="24" r="10.5" />
+      <path d="M50 17.5v29" stroke={accent} strokeWidth="2.5" />
+      <path d="M43.5 54h13" stroke={highlight} strokeWidth="2" />
     </>
   );
 }
 
-function Queen({ accent }: { accent: string }) {
+function Queen({ accent, highlight }: { accent: string; highlight: string }) {
   return (
     <>
-      <circle cx="28" cy="30" r="6" />
-      <circle cx="42" cy="21" r="6" />
-      <circle cx="58" cy="21" r="6" />
-      <circle cx="72" cy="30" r="6" />
-      <path d="M31 64l-6-27 17 13 8-24 8 24 17-13-6 27z" />
-      <path d="M38 57h24" stroke={accent} strokeWidth="3" />
+      <circle cx="27" cy="30" r="5.8" />
+      <circle cx="42" cy="21" r="5.8" />
+      <circle cx="58" cy="21" r="5.8" />
+      <circle cx="73" cy="30" r="5.8" />
+      <path d="M30 66l-5.2-29.5 17.5 13.8L50 25.5l7.7 24.8 17.5-13.8L70 66z" />
+      <path d="M38 57.5h24" stroke={accent} strokeWidth="2.4" />
+      <path d="M41 50l9-24.5 9 24.5" fill="none" stroke={highlight} strokeWidth="1.8" />
     </>
   );
 }
 
-function King() {
+function King({ highlight }: { highlight: string }) {
   return (
     <>
-      <path d="M50 17v19M40 27h20" />
-      <circle cx="50" cy="43" r="12" />
-      <path d="M36 64c2-12 7-20 14-20s12 8 14 20z" />
+      <path d="M50 16v19M40.5 25.5h19" />
+      <circle cx="50" cy="42.5" r="12.2" />
+      <path d="M35 66c1.9-12.8 7.3-21.2 15-21.2S63.1 53.2 65 66z" />
+      <path d="M43 55.5h14" stroke={highlight} strokeWidth="2" />
     </>
   );
 }

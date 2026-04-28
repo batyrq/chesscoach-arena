@@ -125,7 +125,7 @@ export function completeOnboarding(choices: OnboardingChoices, skipped = false) 
 export function recordProgressEvent(kind: ProgressEventKind, options: { lessonId?: string; xp?: number } = {}) {
   const progress = touchToday(loadLearningProgress());
   const xp = options.xp ?? defaultXp(kind);
-  const completedLessons = kind === "lesson" && options.lessonId && !progress.completedLessons.includes(options.lessonId)
+  const completedLessons = options.lessonId && !progress.completedLessons.includes(options.lessonId)
     ? [...progress.completedLessons, options.lessonId]
     : progress.completedLessons;
   const completedReviewsCount = progress.completedReviewsCount + (kind === "review" ? 1 : 0);
