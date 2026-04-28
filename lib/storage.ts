@@ -18,6 +18,8 @@ export type StoredGameReview = {
   moves: Move[];
   result?: Game["result"];
   roomId?: string;
+  mode?: string;
+  timeControl?: string;
 };
 
 export function saveProfile(profile: Omit<ArenaProfile, "playerId"> & { playerId?: string }) {

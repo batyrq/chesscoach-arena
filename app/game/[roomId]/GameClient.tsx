@@ -1,9 +1,10 @@
 "use client";
 
-import { startTransition, useEffect, useMemo, useState } from "react";
+import { startTransition, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Chess, type Move as ChessMove } from "chess.js";
-import { Activity, Flag, Handshake, RotateCcw, Search } from "lucide-react";
+import { Activity, Flag, Handshake, RotateCcw, Search, Swords, Timer } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { ChessBoardPanel } from "@/components/ChessBoardPanel";
 import { GameStatusBanner } from "@/components/GameStatusBanner";
@@ -14,14 +15,22 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { getBrowserTabToken, getOrCreateRoomPlayerId, loadProfile, saveGameReview, saveProfile, saveRoomPlayerId } from "@/lib/storage";
 import { createMultiplayerAdapter } from "@/lib/multiplayer";
+import { botProfiles, chooseBotMove, getTimeControl, type BotLevel } from "@/lib/chess-play";
 import type { City, Move, MultiplayerRoomState, Player, RoomRole } from "@/lib/types";
 
 export function GameClient({ roomId }: { roomId: string }) {
+  const searchParams = useSearchParams();
+  const timeControl = useMemo(() => getTimeControl(searchParams.get("tc")), [searchParams]);
+  const botLevel = (searchParams.get("bot") as BotLevel | null) ?? "club";
+  const selectedColor = searchParams.get("color") ?? "white";
+  const userColor = selectedColor === "black" || (selectedColor === "random" && roomId.length % 2 === 0) ? "black" : "white";
+  const isBotGame = isBotRoom(roomId);
   const [game, setGame] = useState(() => new Chess());
   const [moves, setMoves] = useState<Move[]>([]);
-  const [whiteClock, setWhiteClock] = useState(300);
-  const [blackClock, setBlackClock] = useState(300);
+  const [whiteClock, setWhiteClock] = useState(timeControl.initialSeconds);
+  const [blackClock, setBlackClock] = useState(timeControl.initialSeconds);
   const [ended, setEnded] = useState(false);
+  const [botThinking, setBotThinking] = useState(false);
   const [profile, setProfile] = useState<{ name: string; city: City }>({ name: "Guest Gambiteer", city: "Almaty" });
   const [profileReady, setProfileReady] = useState(false);
   const [playerId, setPlayerId] = useState("");
@@ -29,8 +38,13 @@ export function GameClient({ roomId }: { roomId: string }) {
   const [roomRole, setRoomRole] = useState<RoomRole>("spectator");
   const [realtimeMode, setRealtimeMode] = useState<"local" | "supabase">("local");
   const [moveError, setMoveError] = useState("");
-  const isLocalGame = isLocalRoom(roomId);
+  const isLocalGame = isLocalRoom(roomId) || isBotGame;
   const adapter = useMemo(() => createMultiplayerAdapter(), []);
+  const applyIncrement = useCallback((color: "w" | "b") => {
+    if (!timeControl.incrementSeconds) return;
+    if (color === "w") setWhiteClock((value) => value + timeControl.incrementSeconds);
+    else setBlackClock((value) => value + timeControl.incrementSeconds);
+  }, [timeControl.incrementSeconds]);
 
   useEffect(() => {
     const storedProfile = loadProfile();
@@ -87,19 +101,61 @@ export function GameClient({ roomId }: { roomId: string }) {
   }, [isLocalGame, roomState]);
 
   useEffect(() => {
-    if (ended || game.isGameOver() || (!isLocalGame && roomRole === "spectator")) return;
+    if (ended || game.isGameOver() || (!isLocalGame && (roomRole === "spectator" || roomState?.status !== "active"))) return;
     const timer = window.setInterval(() => {
-      if (game.turn() === "w") setWhiteClock((value) => Math.max(0, value - 1));
-      else setBlackClock((value) => Math.max(0, value - 1));
+      if (game.turn() === "w") {
+        setWhiteClock((value) => {
+          const next = Math.max(0, value - 1);
+          if (next === 0) setEnded(true);
+          return next;
+        });
+      } else {
+        setBlackClock((value) => {
+          const next = Math.max(0, value - 1);
+          if (next === 0) setEnded(true);
+          return next;
+        });
+      }
     }, 1000);
 
     return () => window.clearInterval(timer);
-  }, [ended, game, isLocalGame, roomRole]);
+  }, [ended, game, isLocalGame, roomRole, roomState?.status]);
+
+  useEffect(() => {
+    if (!isBotGame || ended || game.isGameOver() || botThinking) return;
+    const botColor = userColor === "white" ? "b" : "w";
+    if (game.turn() !== botColor) return;
+
+    const thinkingTimer = window.setTimeout(() => setBotThinking(true), 0);
+    const timer = window.setTimeout(() => {
+      const next = new Chess(game.fen());
+      const move = chooseBotMove(next, botLevel);
+      if (!move) {
+        setBotThinking(false);
+        return;
+      }
+
+      const made = next.move({ from: move.from, to: move.to, promotion: move.promotion ?? "q" });
+      const nextMove = toMoveRecord(made, next);
+      startTransition(() => {
+        setGame(next);
+        setMoves((current) => [...current, nextMove]);
+        applyIncrement(made.color);
+        setEnded(next.isGameOver());
+        setBotThinking(false);
+      });
+    }, 550 + (moves.length % 3) * 140);
+
+    return () => {
+      window.clearTimeout(thinkingTimer);
+      window.clearTimeout(timer);
+    };
+  }, [applyIncrement, botLevel, botThinking, ended, game, isBotGame, moves.length, userColor]);
 
   const players: [Player, Player] = useMemo(() => [
-    toDisplayPlayer(roomState, "white", profile),
-    toDisplayPlayer(roomState, "black", profile, isLocalGame)
-  ], [isLocalGame, profile, roomState]);
+    toDisplayPlayer(roomState, "white", profile, isLocalGame, isBotGame, userColor, botLevel),
+    toDisplayPlayer(roomState, "black", profile, isLocalGame, isBotGame, userColor, botLevel)
+  ], [botLevel, isBotGame, isLocalGame, profile, roomState, userColor]);
 
   function onDrop(sourceSquare: string, targetSquare: string) {
     if (ended) return false;
@@ -124,19 +180,9 @@ export function GameClient({ roomId }: { roomId: string }) {
     if (!move) return false;
 
     setGame(next);
-    setMoves((current) => [
-      ...current,
-      {
-        san: move.san,
-        from: move.from,
-        to: move.to,
-        color: move.color,
-        fenAfter: next.fen(),
-        moveNumber: Math.ceil(next.history().length / 2),
-        flags: move.flags,
-        captured: move.captured
-      }
-    ]);
+    setMoves((current) => [...current, toMoveRecord(move, next)]);
+    applyIncrement(move.color);
+    if (next.isGameOver()) setEnded(true);
     return true;
   }
 
@@ -155,9 +201,10 @@ export function GameClient({ roomId }: { roomId: string }) {
     if (!isLocalGame) return;
     setGame(new Chess());
     setMoves([]);
-    setWhiteClock(300);
-    setBlackClock(300);
+    setWhiteClock(timeControl.initialSeconds);
+    setBlackClock(timeControl.initialSeconds);
     setEnded(false);
+    setBotThinking(false);
   }
 
   function saveAndReview() {
@@ -167,7 +214,9 @@ export function GameClient({ roomId }: { roomId: string }) {
       fen: roomState?.fen ?? game.fen(),
       moves: roomState?.moves ?? moves,
       result: roomState?.result ?? getReviewResult(game),
-      roomId
+      roomId,
+      mode: isBotGame ? "Training Bot" : isLocalRoom(roomId) ? "Same Device" : "Friend Room",
+      timeControl: timeControl.label
     });
     window.location.href = `/analysis/${gameId}`;
   }
@@ -196,11 +245,12 @@ export function GameClient({ roomId }: { roomId: string }) {
     if (!result.ok) setMoveError(result.reason ?? "Could not update room.");
   }
 
-  const status = getStatus(game, ended, whiteClock, blackClock, roomId, isLocalGame, roomState, roomRole);
+  const status = getStatus(game, ended, whiteClock, blackClock, roomId, isLocalGame, isBotGame, roomState, roomRole, botThinking, userColor);
   const intense = game.inCheck() || game.isCheckmate() || whiteClock === 0 || blackClock === 0;
   const turnPlayer = game.turn() === "w" ? players[0] : players[1];
-  const canMove = isLocalGame || canCurrentTabMove(roomState, roomRole, game.turn());
-  const roleLabel = isLocalGame ? "Practice game" : roomRole === "spectator" ? "Spectator mode" : `You are ${roomRole === "white" ? "White" : "Black"}`;
+  const canMove = isBotGame ? !botThinking && ((userColor === "white" && game.turn() === "w") || (userColor === "black" && game.turn() === "b")) : isLocalGame || canCurrentTabMove(roomState, roomRole, game.turn());
+  const roleLabel = isBotGame ? `Training Bot · You are ${userColor === "white" ? "White" : "Black"}` : isLocalRoom(roomId) ? "Same device" : roomRole === "spectator" ? "Spectator mode" : `You are ${roomRole === "white" ? "White" : "Black"}`;
+  const boardOrientation = isBotGame ? userColor : roomRole === "black" ? "black" : "white";
 
   return (
     <AppShell>
@@ -212,8 +262,9 @@ export function GameClient({ roomId }: { roomId: string }) {
               <h1 className="mt-2 font-[var(--font-display)] text-4xl font-black tracking-[-0.04em]">Training match</h1>
               <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold text-slate-300">
                 <span className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-1">{roleLabel}</span>
+                <span className="rounded-full border border-[var(--mint)]/20 bg-[rgba(118,247,203,0.08)] px-3 py-1">{timeControl.mode}</span>
+                <span className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-1">{timeControl.label}</span>
                 {!isLocalGame ? <span className="rounded-full border border-[var(--mint)]/20 bg-[rgba(118,247,203,0.08)] px-3 py-1">{realtimeMode === "supabase" ? "Synced game" : "Guest room"}</span> : null}
-                {!isLocalGame ? <span className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-1">v{roomState?.version ?? 0}</span> : null}
               </div>
             </div>
             <div className="flex flex-wrap gap-3">
@@ -225,15 +276,19 @@ export function GameClient({ roomId }: { roomId: string }) {
           </div>
           <GameStatusBanner status={status} intense={intense} />
           {moveError ? <GameStatusBanner status={moveError} intense /> : null}
-          <ArenaHud white={players[0]} black={players[1]} turnName={turnPlayer.name} moves={moves.length} roomId={roomId} onCoachStarter={playCoachStarter} canUseStarter={isLocalGame || canMove} roleLabel={roleLabel} />
-          <ChessBoardPanel fen={game.fen()} onDrop={onDrop} locked={ended || game.isGameOver() || !canMove} />
+          <ArenaHud white={players[0]} black={players[1]} turnName={turnPlayer.name} moves={moves.length} roomId={roomId} onCoachStarter={playCoachStarter} canUseStarter={(isLocalRoom(roomId) || canMove) && !isBotGame} roleLabel={roleLabel} botThinking={botThinking} />
+          <ChessBoardPanel fen={game.fen()} onDrop={onDrop} locked={ended || game.isGameOver() || !canMove} orientation={boardOrientation} />
         </section>
         <aside className="space-y-4">
-          <PlayerCard player={players[1]} active={game.turn() === "b" && !ended} clockSeconds={blackClock} statusLabel={getPlayerStatus(roomState, "black", isLocalGame)} />
+          <PlayerCard player={players[1]} active={game.turn() === "b" && !ended} clockSeconds={blackClock} statusLabel={getPlayerStatus(roomState, "black", isLocalGame, isBotGame, userColor)} />
           <Card className="p-5">
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="font-[var(--font-display)] text-xl font-bold">Move list</h2>
+              <h2 className="font-[var(--font-display)] text-xl font-bold">Score sheet</h2>
               <span className="rounded-full bg-white/10 px-3 py-1 text-xs text-slate-300">{formatPlyCount(moves.length)}</span>
+            </div>
+            <div className="mb-4 grid grid-cols-2 gap-2 text-xs font-semibold text-slate-300">
+              <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-slate-950/45 px-3 py-1"><Timer className="h-3.5 w-3.5 text-[var(--mint)]" /> {timeControl.label}</span>
+              <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-slate-950/45 px-3 py-1"><Swords className="h-3.5 w-3.5 text-[var(--gold)]" /> {timeControl.mode}</span>
             </div>
             <MoveHistory moves={moves} />
             <GameStats moves={moves} />
@@ -245,11 +300,16 @@ export function GameClient({ roomId }: { roomId: string }) {
                 <Handshake className="h-3.5 w-3.5" /> Draw
               </Button>
               <Button variant="secondary" size="sm" onClick={resetGame} disabled={!isLocalGame}>
-                <RotateCcw className="h-3.5 w-3.5" /> New
+                <RotateCcw className="h-3.5 w-3.5" /> New Game
               </Button>
             </div>
+            {ended || game.isGameOver() ? (
+              <Button className="mt-3 w-full" onClick={saveAndReview}>
+                <Search className="h-4 w-4" /> Game Review
+              </Button>
+            ) : null}
           </Card>
-          <PlayerCard player={players[0]} active={game.turn() === "w" && !ended} clockSeconds={whiteClock} statusLabel={getPlayerStatus(roomState, "white", isLocalGame)} />
+          <PlayerCard player={players[0]} active={game.turn() === "w" && !ended} clockSeconds={whiteClock} statusLabel={getPlayerStatus(roomState, "white", isLocalGame, isBotGame, userColor)} />
           <Link href="/leaderboard" className="block rounded-[1.5rem] border border-white/10 bg-white/[0.05] p-4 text-sm text-slate-300 transition hover:bg-white/[0.09]">
             Review your game to appear on the city leaderboard. Sign in to keep progress across devices.
           </Link>
@@ -257,6 +317,19 @@ export function GameClient({ roomId }: { roomId: string }) {
       </main>
     </AppShell>
   );
+}
+
+function toMoveRecord(move: ChessMove, chess: Chess): Move {
+  return {
+    san: move.san,
+    from: move.from,
+    to: move.to,
+    color: move.color,
+    fenAfter: chess.fen(),
+    moveNumber: Math.ceil(chess.history().length / 2),
+    flags: move.flags,
+    captured: move.captured
+  };
 }
 
 function getReviewResult(game: Chess) {
@@ -271,8 +344,8 @@ function formatPlyCount(count: number) {
   return `${count} plies`;
 }
 
-function ArenaHud({ white, black, turnName, moves, roomId, onCoachStarter, canUseStarter, roleLabel }: { white: Player; black: Player; turnName: string; moves: number; roomId: string; onCoachStarter: () => void; canUseStarter: boolean; roleLabel: string }) {
-  const friendRoom = !isLocalRoom(roomId);
+function ArenaHud({ white, black, turnName, moves, roomId, onCoachStarter, canUseStarter, roleLabel, botThinking }: { white: Player; black: Player; turnName: string; moves: number; roomId: string; onCoachStarter: () => void; canUseStarter: boolean; roleLabel: string; botThinking: boolean }) {
+  const centerLabel = isBotRoom(roomId) ? "Training Bot" : !isLocalRoom(roomId) ? "Friend room" : roleLabel;
 
   return (
     <div className="grid gap-3 rounded-[1.75rem] border border-white/10 bg-white/[0.05] p-4 sm:grid-cols-[1fr_auto_1fr] sm:items-center">
@@ -280,9 +353,9 @@ function ArenaHud({ white, black, turnName, moves, roomId, onCoachStarter, canUs
       <div className="rounded-[1.25rem] bg-slate-950/55 px-4 py-3 text-center">
         <p className="text-[0.68rem] uppercase tracking-[0.2em] text-slate-500">Next action</p>
         <p className="mt-1 text-sm font-semibold text-white">
-          {moves === 0 ? "Drag a white piece to start" : `${turnName} to move`}
+          {botThinking ? "Bot thinking..." : moves === 0 ? "Drag a white piece to start" : `${turnName}'s turn`}
         </p>
-        <p className="mt-1 text-xs text-[var(--gold)]">{friendRoom ? "Friend room" : roleLabel}</p>
+        <p className="mt-1 text-xs text-[var(--gold)]">{centerLabel}</p>
         {moves < 6 && canUseStarter ? (
           <button
             type="button"
@@ -337,10 +410,12 @@ function Stat({ label, value }: { label: string; value: string }) {
   );
 }
 
-function getStatus(game: Chess, ended: boolean, whiteClock: number, blackClock: number, roomId: string, isLocalGame: boolean, roomState: MultiplayerRoomState | null, roomRole: RoomRole) {
+function getStatus(game: Chess, ended: boolean, whiteClock: number, blackClock: number, roomId: string, isLocalGame: boolean, isBotGame: boolean, roomState: MultiplayerRoomState | null, roomRole: RoomRole, botThinking: boolean, userColor: "white" | "black") {
   if (whiteClock === 0) return "Black wins on time. Review the scramble while it is fresh.";
   if (blackClock === 0) return "White wins on time. Clean clock pressure.";
   if (ended) return "Game ended. Jump to review for coach feedback.";
+  if (isBotGame && botThinking) return "Training Bot is thinking.";
+  if (isBotGame) return game.turn() === (userColor === "white" ? "w" : "b") ? "Your turn." : "Bot's turn.";
   if (!isLocalGame && roomRole === "spectator") return "Spectator mode. You can watch the game and open the coach review.";
   if (!isLocalGame && roomState?.status === "waiting") return "Waiting for opponent. Share the invite link to assign Black.";
   if (game.isCheckmate()) return `${game.turn() === "w" ? "Black" : "White"} wins by checkmate.`;
@@ -355,7 +430,12 @@ function isLocalRoom(roomId: string) {
   return normalized === "local" || normalized.startsWith("local-");
 }
 
-function toDisplayPlayer(roomState: MultiplayerRoomState | null, role: "white" | "black", profile: { name: string; city: City }, isLocalGame?: boolean): Player {
+function isBotRoom(roomId: string) {
+  const normalized = roomId.toLowerCase();
+  return normalized === "bot" || normalized.startsWith("bot-");
+}
+
+function toDisplayPlayer(roomState: MultiplayerRoomState | null, role: "white" | "black", profile: { name: string; city: City }, isLocalGame: boolean | undefined, isBotGame: boolean, userColor: "white" | "black", botLevel: BotLevel): Player {
   const roomPlayer = roomState?.players.find((player) => player.role === role);
   if (roomPlayer) {
     return {
@@ -368,11 +448,20 @@ function toDisplayPlayer(roomState: MultiplayerRoomState | null, role: "white" |
     };
   }
 
+  if (isBotGame && role !== userColor) {
+    const bot = botProfiles[botLevel] ?? botProfiles.club;
+    return { id: `bot-${botLevel}`, name: bot.name, city: profile.city, rating: bot.rating, color: role };
+  }
+
+  if (isBotGame && role === userColor) {
+    return { id: "local", name: profile.name, city: profile.city, rating: 1420, color: role, isPro: true };
+  }
+
   if (role === "white") {
     return { id: "local", name: profile.name, city: profile.city, rating: 1420, color: "white", isPro: true };
   }
 
-  return { id: "friend", name: isLocalGame ? "Local Rival" : "Waiting Friend", city: profile.city, rating: 1390, color: "black" };
+  return { id: "friend", name: isLocalGame ? "Practice Rival" : "Waiting Friend", city: profile.city, rating: 1390, color: "black" };
 }
 
 function canCurrentTabMove(roomState: MultiplayerRoomState | null, role: RoomRole, turn: "w" | "b") {
@@ -381,8 +470,9 @@ function canCurrentTabMove(roomState: MultiplayerRoomState | null, role: RoomRol
   return (role === "white" && turn === "w") || (role === "black" && turn === "b");
 }
 
-function getPlayerStatus(roomState: MultiplayerRoomState | null, role: "white" | "black", isLocalGame: boolean) {
-  if (isLocalGame) return "Local";
+function getPlayerStatus(roomState: MultiplayerRoomState | null, role: "white" | "black", isLocalGame: boolean, isBotGame: boolean, userColor: "white" | "black") {
+  if (isBotGame) return role === userColor ? "You" : "Training Bot";
+  if (isLocalGame) return "Same device";
   const player = roomState?.players.find((item) => item.role === role);
   if (!player) return "Waiting";
   return player.connected ? "Connected" : "Reconnecting";

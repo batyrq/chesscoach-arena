@@ -8,7 +8,7 @@ export function ShareRoomButton({ roomId }: { roomId: string }) {
   const [copied, setCopied] = useState(false);
 
   async function copyInvite() {
-    const url = `${window.location.origin}/game/${roomId}`;
+    const url = `${window.location.origin}/game/${roomId}${window.location.search}`;
     await navigator.clipboard.writeText(url);
     setCopied(true);
     window.setTimeout(() => setCopied(false), 1800);
