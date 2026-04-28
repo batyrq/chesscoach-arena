@@ -1,6 +1,6 @@
 "use client";
 
-import { startTransition, useCallback, useEffect, useMemo, useState } from "react";
+import { startTransition, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Chess, type Move as ChessMove } from "chess.js";
@@ -40,6 +40,8 @@ export function GameClient({ roomId }: { roomId: string }) {
   const [moveError, setMoveError] = useState("");
   const isLocalGame = isLocalRoom(roomId) || isBotGame;
   const adapter = useMemo(() => createMultiplayerAdapter(), []);
+  const botMoveInFlightRef = useRef(false);
+  const latestGameRef = useRef(game);
   const applyIncrement = useCallback((color: "w" | "b") => {
     if (!timeControl.incrementSeconds) return;
     if (color === "w") setWhiteClock((value) => value + timeControl.incrementSeconds);
@@ -101,6 +103,10 @@ export function GameClient({ roomId }: { roomId: string }) {
   }, [isLocalGame, roomState]);
 
   useEffect(() => {
+    latestGameRef.current = game;
+  }, [game]);
+
+  useEffect(() => {
     if (ended || game.isGameOver() || (!isLocalGame && (roomRole === "spectator" || roomState?.status !== "active"))) return;
     const timer = window.setInterval(() => {
       if (game.turn() === "w") {
@@ -122,35 +128,43 @@ export function GameClient({ roomId }: { roomId: string }) {
   }, [ended, game, isLocalGame, roomRole, roomState?.status]);
 
   useEffect(() => {
-    if (!isBotGame || ended || game.isGameOver() || botThinking) return;
+    if (!isBotGame || ended || game.isGameOver()) return;
     const botColor = userColor === "white" ? "b" : "w";
     if (game.turn() !== botColor) return;
+    if (botMoveInFlightRef.current) return;
 
-    const thinkingTimer = window.setTimeout(() => setBotThinking(true), 0);
+    botMoveInFlightRef.current = true;
+    setBotThinking(true);
     const timer = window.setTimeout(() => {
-      const next = new Chess(game.fen());
-      const move = chooseBotMove(next, botLevel);
-      if (!move) {
-        setBotThinking(false);
-        return;
-      }
+      try {
+        const current = latestGameRef.current;
+        const next = new Chess(current.fen());
+        if (next.turn() !== botColor || next.isGameOver()) return;
 
-      const made = next.move({ from: move.from, to: move.to, promotion: move.promotion ?? "q" });
-      const nextMove = toMoveRecord(made, next);
-      startTransition(() => {
-        setGame(next);
-        setMoves((current) => [...current, nextMove]);
-        applyIncrement(made.color);
-        setEnded(next.isGameOver());
+        const move = chooseBotMove(next, botLevel);
+        if (!move) return;
+
+        const made = next.move({ from: move.from, to: move.to, promotion: move.promotion ?? "q" });
+        const nextMove = toMoveRecord(made, next);
+        startTransition(() => {
+          setGame(next);
+          setMoves((currentMoves) => [...currentMoves, nextMove]);
+          applyIncrement(made.color);
+          setEnded(next.isGameOver());
+        });
+      } catch {
+        setMoveError("Training Bot paused. Make another move to continue.");
+      } finally {
+        botMoveInFlightRef.current = false;
         setBotThinking(false);
-      });
+      }
     }, 550 + (moves.length % 3) * 140);
 
     return () => {
-      window.clearTimeout(thinkingTimer);
       window.clearTimeout(timer);
+      botMoveInFlightRef.current = false;
     };
-  }, [applyIncrement, botLevel, botThinking, ended, game, isBotGame, moves.length, userColor]);
+  }, [applyIncrement, botLevel, ended, game, isBotGame, moves.length, userColor]);
 
   const players: [Player, Player] = useMemo(() => [
     toDisplayPlayer(roomState, "white", profile, isLocalGame, isBotGame, userColor, botLevel),
