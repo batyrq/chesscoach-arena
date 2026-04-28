@@ -1,17 +1,21 @@
+"use client";
+
 import { AlertTriangle, BarChart3, Brain, Gauge, ShieldAlert, Target, TrendingUp } from "lucide-react";
 import type React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ProUpgradeModal } from "@/components/ProUpgradeModal";
+import { useI18n } from "@/lib/i18n";
 import type { AnalysisResult } from "@/lib/types";
 
 export function CoachAnalysisCard({ analysis }: { analysis: AnalysisResult }) {
+  const { t } = useI18n();
   const moment = analysis.criticalMoment;
 
   return (
     <Card>
       <CardHeader>
-        <p className="text-sm font-semibold uppercase tracking-[0.3em] text-[var(--mint)]">AI Coach</p>
-        <CardTitle className="text-3xl">Coach review</CardTitle>
+        <p className="text-sm font-semibold tracking-[0.12em] text-[var(--mint)]">{t("gameReview")}</p>
+        <CardTitle className="text-3xl">{t("coachReview")}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-5">
         <div className="grid gap-3 sm:grid-cols-4">
@@ -22,12 +26,12 @@ export function CoachAnalysisCard({ analysis }: { analysis: AnalysisResult }) {
         </div>
         <div className="rounded-[1.25rem] border border-[var(--mint)]/25 bg-[rgba(118,247,203,0.08)] p-4">
           <p className="flex items-center gap-2 font-semibold text-white">
-            <Gauge className="h-5 w-5 text-[var(--mint)]" /> Coach verdict
+            <Gauge className="h-5 w-5 text-[var(--mint)]" /> {t("coachVerdict")}
           </p>
           <p className="mt-2 text-sm leading-6 text-slate-300">{analysis.summary}</p>
         </div>
-        <Insight icon={<Brain className="h-5 w-5" />} title={moment ? `Move ${moment.moveNumber}: ${moment.originalMove}` : "Biggest mistake"} body={analysis.biggestMistake} tone="danger" />
-        <Insight icon={<TrendingUp className="h-5 w-5" />} title={`Better move: ${analysis.betterMove}`} body={analysis.whyItWorks} />
+        <Insight icon={<Brain className="h-5 w-5" />} title={moment ? `${t("keyMoment")} ${moment.moveNumber}: ${moment.originalMove}` : t("biggestMistake")} body={analysis.biggestMistake} tone="danger" />
+        <Insight icon={<TrendingUp className="h-5 w-5" />} title={`${t("betterMove")}: ${analysis.betterMove}`} body={analysis.whyItWorks} />
         {moment ? (
           <div className="grid gap-3 sm:grid-cols-3">
             <MomentStat label="Side" value={moment.color === "w" ? "White" : "Black"} />
@@ -35,10 +39,10 @@ export function CoachAnalysisCard({ analysis }: { analysis: AnalysisResult }) {
             <MomentStat label="Before move" value={`Ply ${moment.ply}`} />
           </div>
         ) : null}
-        <Insight icon={<Target className="h-5 w-5" />} title="Training drill" body={analysis.drill} />
+        <Insight icon={<Target className="h-5 w-5" />} title={t("trainingDrill")} body={analysis.drill} />
         <div className="rounded-[1.25rem] border border-white/10 bg-white/[0.04] p-4">
           <p className="flex items-center gap-2 font-semibold">
-            <BarChart3 className="h-5 w-5 text-[var(--mint)]" /> 3 personalized tips
+            <BarChart3 className="h-5 w-5 text-[var(--mint)]" /> 3 {t("personalizedTips")}
           </p>
           <ul className="mt-3 space-y-3 text-sm text-slate-300">
             {analysis.tips.map((tip) => (
@@ -51,13 +55,13 @@ export function CoachAnalysisCard({ analysis }: { analysis: AnalysisResult }) {
         </div>
         <div className="rounded-[1.25rem] border border-[var(--gold)]/25 bg-[rgba(248,200,106,0.08)] p-4">
           <p className="flex items-center gap-2 font-semibold text-white">
-            <ShieldAlert className="h-5 w-5 text-[var(--gold)]" /> Pro unlock
+            <ShieldAlert className="h-5 w-5 text-[var(--gold)]" /> {t("proUnlock")}
           </p>
           <p className="mt-2 text-sm leading-6 text-slate-300">
-            Upgrade to Pro for full Stockfish lines and unlimited game reviews, plus opening tags and a custom drill queue for this exact mistake pattern.
+            {t("proUnlockBody")}
           </p>
           <div className="mt-4">
-            <ProUpgradeModal triggerLabel="Unlock deeper Pro analysis" />
+            <ProUpgradeModal triggerLabel={t("unlockDeeper")} />
           </div>
         </div>
       </CardContent>

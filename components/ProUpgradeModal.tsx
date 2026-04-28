@@ -14,10 +14,13 @@ import {
   DialogTrigger
 } from "@/components/ui/dialog";
 import { activateDemoPro, loadProStatus, type ProStatus } from "@/lib/pro";
+import { useI18n } from "@/lib/i18n";
 
 const initialProStatus: ProStatus = { isPro: false, status: "free", plan: "free", provider: "local" };
 
 export function ProUpgradeModal({ triggerLabel = "Upgrade to Pro" }: { triggerLabel?: string }) {
+  const { t, locale } = useI18n();
+  const ru = locale === "ru";
   const [status, setStatus] = useState<ProStatus>(initialProStatus);
   const [upgrading, setUpgrading] = useState(false);
 
@@ -39,12 +42,16 @@ export function ProUpgradeModal({ triggerLabel = "Upgrade to Pro" }: { triggerLa
     setUpgrading(false);
   }
 
+  const freeItems = ru
+    ? ["Тренировки и партии с другом", "Быстрый разбор", "Городской рейтинг", "Гостевой профиль"]
+    : ["Practice and friend games", "Quick coach review", "City leaderboard", "Guest profile"];
+
   return (
     <Dialog>
       <DialogTrigger asChild>
         <Button variant={status.isPro ? "secondary" : "default"}>
           {status.isPro ? <Crown className="h-4 w-4" /> : null}
-          {status.isPro ? "Founder Pro" : triggerLabel}
+          {status.isPro ? t("founderPro") : triggerLabel}
         </Button>
       </DialogTrigger>
       <DialogContent>
@@ -52,52 +59,48 @@ export function ProUpgradeModal({ triggerLabel = "Upgrade to Pro" }: { triggerLa
           <p className="text-sm font-semibold uppercase tracking-[0.3em] text-[var(--gold)]">
             ChessCoach Pro
           </p>
-          <DialogTitle>Turn every blunder into a training loop.</DialogTitle>
+          <DialogTitle>{ru ? "Превратите каждый зевок в тренировку." : "Turn every blunder into a training loop."}</DialogTitle>
           <DialogDescription>
-            Demo checkout only. No card, no Stripe, no real payment collection.
+            {ru ? "Демо-апгрейд без карты и реальной оплаты." : "Demo checkout only. No card and no real payment collection."}
           </DialogDescription>
         </DialogHeader>
         <div className="mt-6 grid gap-4 md:grid-cols-2">
-          <PlanCard
-            title="Free"
-            price="$0"
-            items={["Practice and friend games", "Quick coach review", "City leaderboard", "Guest profile"]}
-          />
+          <PlanCard title="Free" price="$0" items={freeItems} />
           <div className="relative overflow-hidden rounded-[1.5rem] border border-[var(--gold)]/45 bg-[linear-gradient(145deg,rgba(248,200,106,0.18),rgba(118,247,203,0.08))] p-5">
             <div className="absolute right-4 top-4 rounded-full bg-[var(--gold)] px-3 py-1 text-xs font-bold text-slate-950">
-              Founder demo
+              Founder Demo
             </div>
             <p className="flex items-center gap-2 font-[var(--font-display)] text-xl font-bold">
               <Crown className="h-5 w-5 text-[var(--gold)]" /> Pro
             </p>
             <p className="mt-2 text-3xl font-bold">$9<span className="text-sm text-slate-300">/mo demo</span></p>
             <ul className="mt-5 space-y-3 text-sm text-slate-200">
-              <Feature icon={<Brain className="h-4 w-4" />} text="Deeper Gemini AI Coach review" />
-              <Feature icon={<Wand2 className="h-4 w-4" />} text="Blunder-to-puzzle training" />
-              <Feature icon={<Share2 className="h-4 w-4" />} text="Shareable coach summary" />
-              <Feature icon={<Trophy className="h-4 w-4" />} text="Pro badge on your city profile" />
+              <Feature icon={<Brain className="h-4 w-4" />} text={ru ? "Углублённый разбор тренера" : "Deeper coach review"} />
+              <Feature icon={<Wand2 className="h-4 w-4" />} text={ru ? "Тренировка по ошибкам" : "Blunder-to-puzzle training"} />
+              <Feature icon={<Share2 className="h-4 w-4" />} text={ru ? "Краткое резюме для шера" : "Shareable coach summary"} />
+              <Feature icon={<Trophy className="h-4 w-4" />} text={ru ? "Pro-бейдж в городском профиле" : "Pro badge on your city profile"} />
             </ul>
           </div>
         </div>
         <div className="mt-4 rounded-[1.25rem] border border-white/10 bg-white/[0.04] p-4 text-sm leading-6 text-slate-300">
-          Demo checkout — no real payment will be charged. The upgrade saves a Founder Pro status with your profile.
+          {ru ? "Демо-апгрейд — без реальной оплаты. Статус Founder Pro сохраняется в профиле." : "Demo checkout — no real payment will be charged. The upgrade saves a Founder Pro status with your profile."}
         </div>
         {status.isPro ? (
           <div className="mt-4 rounded-[1.25rem] border border-[var(--mint)]/30 bg-[rgba(118,247,203,0.1)] p-4 text-sm text-slate-200">
             <p className="flex items-center gap-2 font-semibold text-white">
-              <BadgeCheck className="h-4 w-4 text-[var(--mint)]" /> Founder Pro active
+              <BadgeCheck className="h-4 w-4 text-[var(--mint)]" /> {t("proActive")}
             </p>
             <p className="mt-1 text-slate-300">
-              {status.provider === "supabase" ? "Progress saved with your profile." : "Progress saved on this device."}
+              {status.provider === "supabase" ? t("progressSaved") : `${t("progressSaved")} · ${t("thisDevice")}`}
             </p>
           </div>
         ) : null}
         <div className="mt-6 grid gap-3 sm:grid-cols-[1fr_auto]">
           <Button size="lg" onClick={() => void upgrade()} disabled={upgrading || status.isPro}>
-            <Sparkles className="h-4 w-4" /> {status.isPro ? "Founder Pro active" : upgrading ? "Activating..." : "Upgrade to Pro Demo"}
+            <Sparkles className="h-4 w-4" /> {status.isPro ? t("proActive") : upgrading ? (ru ? "Активируем..." : "Activating...") : t("upgradeToProDemo")}
           </Button>
           <Button asChild variant="secondary" size="lg">
-            <Link href="/pro">Full Pro page</Link>
+            <Link href="/pro">{ru ? "Страница Pro" : "Full Pro page"}</Link>
           </Button>
         </div>
       </DialogContent>

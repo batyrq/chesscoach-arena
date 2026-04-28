@@ -5,21 +5,6 @@ import { useState } from "react";
 const files = ["a", "b", "c", "d", "e", "f", "g", "h"] as const;
 const ranks = ["8", "7", "6", "5", "4", "3", "2", "1"] as const;
 
-const pieces: Record<string, string> = {
-  K: "\u265A",
-  Q: "\u265B",
-  R: "\u265C",
-  B: "\u265D",
-  N: "\u265E",
-  P: "\u265F",
-  k: "\u265A",
-  q: "\u265B",
-  r: "\u265C",
-  b: "\u265D",
-  n: "\u265E",
-  p: "\u265F"
-};
-
 type ChessBoardPanelProps = {
   fen: string;
   onDrop?: (sourceSquare: string, targetSquare: string) => boolean;
@@ -73,13 +58,7 @@ export function ChessBoardPanel({ fen, onDrop, locked, orientation = "white" }: 
             >
               {rowIndex === 7 ? <span className={`pointer-events-none absolute bottom-1 right-1 text-[0.58rem] font-semibold uppercase ${light ? "text-stone-800/55" : "text-stone-50/60"}`}>{displayFiles[colIndex]}</span> : null}
               {colIndex === 0 ? <span className={`pointer-events-none absolute left-1 top-1 text-[0.58rem] font-semibold ${light ? "text-stone-800/55" : "text-stone-50/60"}`}>{displayRanks[rowIndex]}</span> : null}
-              <span
-                data-piece-color={piece ? getPieceColor(piece) : undefined}
-                className={piece ? getPieceClass(piece) : ""}
-                style={piece ? getPieceStyle(piece) : undefined}
-              >
-                {piece ? pieces[piece] : ""}
-              </span>
+              {piece ? <PieceSvg piece={piece} /> : null}
             </button>
           );
         }))}
@@ -117,20 +96,102 @@ function orientBoard(board: Array<Array<string | null>>, orientation: "white" | 
   return board.map((row) => [...row].reverse()).reverse();
 }
 
-function getPieceClass(piece: string) {
-  return piece === piece.toUpperCase()
-    ? "select-none font-serif text-[#f8f4e8] drop-shadow-[0_2px_1px_rgba(33,22,14,0.9)]"
-    : "select-none font-serif text-[#17120d] drop-shadow-[0_1px_1px_rgba(255,244,214,0.6)]";
-}
-
-function getPieceStyle(piece: string) {
-  return piece === piece.toUpperCase()
-    ? { color: "#f8f4e8", WebkitTextStroke: "0.6px rgba(32, 24, 16, 0.8)", textShadow: "0 1px 2px rgba(0,0,0,0.85)" }
-    : { color: "#17120d", WebkitTextStroke: "0.35px rgba(255, 244, 214, 0.62)", textShadow: "0 1px 1px rgba(255,255,255,0.45)" };
-}
-
 function getPieceColor(piece: string) {
   return piece === piece.toUpperCase() ? "white" : "black";
+}
+
+function getPieceCode(piece: string) {
+  return `${getPieceColor(piece) === "white" ? "w" : "b"}${piece.toUpperCase()}`;
+}
+
+function PieceSvg({ piece }: { piece: string }) {
+  const color = getPieceColor(piece);
+  const type = piece.toLowerCase();
+  const fill = color === "white" ? "#f7efe0" : "#17130f";
+  const stroke = color === "white" ? "#5a4934" : "#f3dfb9";
+  const accent = color === "white" ? "#fffaf0" : "#2a2119";
+
+  return (
+    <svg
+      aria-hidden="true"
+      data-piece-code={getPieceCode(piece)}
+      data-piece-color={color}
+      viewBox="0 0 100 100"
+      className="pointer-events-none h-[80%] w-[80%] select-none drop-shadow-[0_4px_5px_rgba(0,0,0,0.42)]"
+      style={{ filter: color === "white" ? "drop-shadow(0 2px 1px rgba(36, 24, 15, 0.78))" : "drop-shadow(0 1px 1px rgba(255, 239, 206, 0.42))" }}
+    >
+      <g fill={fill} stroke={stroke} strokeLinecap="round" strokeLinejoin="round" strokeWidth="4">
+        <path d="M24 86h52l-4-12H28z" />
+        <path d="M31 74h38l-3-10H34z" />
+        {type === "p" ? <Pawn /> : null}
+        {type === "r" ? <Rook /> : null}
+        {type === "n" ? <Knight accent={accent} /> : null}
+        {type === "b" ? <Bishop accent={accent} /> : null}
+        {type === "q" ? <Queen accent={accent} /> : null}
+        {type === "k" ? <King /> : null}
+      </g>
+    </svg>
+  );
+}
+
+function Pawn() {
+  return (
+    <>
+      <circle cx="50" cy="30" r="12" />
+      <path d="M38 64c2-14 5-22 12-22s10 8 12 22z" />
+    </>
+  );
+}
+
+function Rook() {
+  return (
+    <>
+      <path d="M30 22h10v9h10v-9h10v9h10v-9h6v19H24V22z" />
+      <path d="M31 64h38l-5-24H36z" />
+    </>
+  );
+}
+
+function Knight({ accent }: { accent: string }) {
+  return (
+    <>
+      <path d="M31 65c4-17 10-29 24-43 9 6 16 16 18 30l-9 6-12-9-7 16z" />
+      <circle cx="55" cy="34" r="2.7" fill={accent} stroke="none" />
+    </>
+  );
+}
+
+function Bishop({ accent }: { accent: string }) {
+  return (
+    <>
+      <path d="M38 64c1-14 6-24 12-32 6 8 11 18 12 32z" />
+      <circle cx="50" cy="24" r="10" />
+      <path d="M50 18v28" stroke={accent} strokeWidth="3" />
+    </>
+  );
+}
+
+function Queen({ accent }: { accent: string }) {
+  return (
+    <>
+      <circle cx="28" cy="30" r="6" />
+      <circle cx="42" cy="21" r="6" />
+      <circle cx="58" cy="21" r="6" />
+      <circle cx="72" cy="30" r="6" />
+      <path d="M31 64l-6-27 17 13 8-24 8 24 17-13-6 27z" />
+      <path d="M38 57h24" stroke={accent} strokeWidth="3" />
+    </>
+  );
+}
+
+function King() {
+  return (
+    <>
+      <path d="M50 17v19M40 27h20" />
+      <circle cx="50" cy="43" r="12" />
+      <path d="M36 64c2-12 7-20 14-20s12 8 14 20z" />
+    </>
+  );
 }
 
 function pieceName(piece: string) {

@@ -17,7 +17,8 @@ type BoardScope = "city" | "global";
 type TimeFilter = "all" | "week";
 
 export function CityLeaderboard() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
+  const ru = locale === "ru";
   const [city, setCity] = useState<CityFilter>("Almaty");
   const [scope, setScope] = useState<BoardScope>("city");
   const [timeFilter, setTimeFilter] = useState<TimeFilter>("all");
@@ -31,14 +32,8 @@ export function CityLeaderboard() {
   useEffect(() => {
     let cancelled = false;
     async function loadLeaderboard() {
-      const [auth, player] = await Promise.all([
-        getAuthView(),
-        adapter.getCurrentPlayer(),
-      ]);
-      const [nextEntries, reviews] = await Promise.all([
-        adapter.getEntries(),
-        adapter.getRecentReviews(),
-      ]);
+      const [auth, player] = await Promise.all([getAuthView(), adapter.getCurrentPlayer()]);
+      const [nextEntries, reviews] = await Promise.all([adapter.getEntries(), adapter.getRecentReviews()]);
       if (cancelled) return;
       startTransition(() => {
         setSignedIn(Boolean(auth.user));
@@ -90,42 +85,34 @@ export function CityLeaderboard() {
     streak: currentEntry ? Math.min(9, Math.max(1, currentEntry.reviews)) : 0,
   }), [currentEntry, currentPlayer, visibleEntries]);
 
-  const boardTitle = scope === "global" || city === "All Cities" ? "All Cities" : city;
+  const boardTitle = scope === "global" || city === "All Cities" ? (ru ? "Все города" : "All Cities") : city;
 
   return (
     <div className="space-y-6">
       <section className="glass overflow-hidden rounded-[2rem] p-5 md:p-7">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-[var(--gold)]">Arena board</p>
-            <h2 className="mt-3 font-[var(--font-display)] text-3xl font-bold">Top players · {boardTitle}</h2>
+            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-[var(--gold)]">{t("arenaBoard")}</p>
+            <h2 className="mt-3 font-[var(--font-display)] text-3xl font-bold">{t("topPlayers")} · {boardTitle}</h2>
             <p className="mt-2 max-w-xl text-sm leading-6 text-slate-300">
-              {scope === "global" || city === "All Cities" ? "The strongest coach profiles across every city." : cityCopy[city]}
+              {scope === "global" || city === "All Cities" ? (ru ? "Сильнейшие профили со всех городов." : "The strongest coach profiles across every city.") : cityCopy[city]}
             </p>
           </div>
           <div className="grid gap-3 sm:grid-cols-3 lg:min-w-[34rem]">
             <Select value={city} onChange={(event) => setCity(event.target.value as CityFilter)}>
-              <option>All Cities</option>
+              <option value="All Cities">{ru ? "Все города" : "All Cities"}</option>
               {cities.map((item) => <option key={item}>{item}</option>)}
             </Select>
-            <SegmentedControl
-              value={scope}
-              options={[["city", "City"], ["global", "Global"]]}
-              onChange={(value) => setScope(value as BoardScope)}
-            />
-            <SegmentedControl
-              value={timeFilter}
-              options={[["all", "All Time"], ["week", "This Week"]]}
-              onChange={(value) => setTimeFilter(value as TimeFilter)}
-            />
+            <SegmentedControl value={scope} options={[["city", t("city")], ["global", t("global")]]} onChange={(value) => setScope(value as BoardScope)} />
+            <SegmentedControl value={timeFilter} options={[["all", t("allTime")], ["week", t("thisWeek")]]} onChange={(value) => setTimeFilter(value as TimeFilter)} />
           </div>
         </div>
 
         <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          <ArenaStat label={t("yourRank")} value={currentPlayer ? formatRank(currentCityRank) : "Guest"} detail={currentPlayer ? `in ${currentPlayer.city}` : "Create a profile"} icon={<MapPin className="h-4 w-4" />} />
-          <ArenaStat label="Arena Rating" value={(currentEntry?.rating ?? totals.topRating).toString()} detail="All-time score" icon={<Trophy className="h-4 w-4" />} />
-          <ArenaStat label={t("reviewedGames")} value={(currentEntry?.reviews ?? totals.reviewedGames).toString()} detail="Coach-checked games" icon={<Search className="h-4 w-4" />} />
-          <ArenaStat label={t("currentForm")} value={totals.streak ? `${totals.streak}x` : "Ready"} detail={`Coach Score ${currentEntry?.coachScore ?? totals.avgCoach}`} icon={<Flame className="h-4 w-4" />} />
+          <ArenaStat label={t("yourRank")} value={currentPlayer ? formatRank(currentCityRank, locale) : t("guestProfile")} detail={currentPlayer ? `${ru ? "в" : "in"} ${currentPlayer.city}` : (ru ? "Создайте профиль" : "Create a profile")} icon={<MapPin className="h-4 w-4" />} />
+          <ArenaStat label={ru ? "Рейтинг арены" : "Arena Rating"} value={(currentEntry?.rating ?? totals.topRating).toString()} detail={ru ? "Общий счёт" : "All-time score"} icon={<Trophy className="h-4 w-4" />} />
+          <ArenaStat label={t("reviewedGames")} value={(currentEntry?.reviews ?? totals.reviewedGames).toString()} detail={ru ? "Партии с разбором" : "Coach-checked games"} icon={<Search className="h-4 w-4" />} />
+          <ArenaStat label={t("currentForm")} value={totals.streak ? `${totals.streak}x` : (ru ? "Готово" : "Ready")} detail={`${ru ? "Оценка тренера" : "Coach Score"} ${currentEntry?.coachScore ?? totals.avgCoach}`} icon={<Flame className="h-4 w-4" />} />
         </div>
 
         {currentPlayer ? <CurrentPlayerCard player={currentPlayer} rank={currentCityRank} signedIn={signedIn} /> : <GuestProfileState />}
@@ -134,13 +121,13 @@ export function CityLeaderboard() {
 
         <div className="mt-8 overflow-hidden rounded-[1.5rem] border border-white/10 bg-slate-950/30">
           <div className="hidden grid-cols-[4.5rem_1.4fr_0.8fr_0.8fr_0.8fr_1fr_0.9fr] gap-3 border-b border-white/10 px-4 py-3 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 lg:grid">
-            <span>Rank</span>
-            <span>Player</span>
-            <span>City</span>
-            <span>Arena Rating</span>
-            <span>Coach Score</span>
-            <span>Badges</span>
-            <span>Last Review</span>
+            <span>{t("rank")}</span>
+            <span>{ru ? "Игрок" : "Player"}</span>
+            <span>{t("city")}</span>
+            <span>{ru ? "Рейтинг арены" : "Arena Rating"}</span>
+            <span>{ru ? "Оценка тренера" : "Coach Score"}</span>
+            <span>{ru ? "Бейджи" : "Badges"}</span>
+            <span>{ru ? "Последний разбор" : "Last Review"}</span>
           </div>
           <div className="divide-y divide-white/10">
             {visibleEntries.map((player) => (
@@ -155,7 +142,7 @@ export function CityLeaderboard() {
         <div className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-5">
           <div className="mb-5 flex items-center gap-3">
             <Medal className="h-5 w-5 text-[var(--gold)]" />
-            <h3 className="font-[var(--font-display)] text-2xl font-bold">City Champions</h3>
+            <h3 className="font-[var(--font-display)] text-2xl font-bold">{t("cityChampions")}</h3>
           </div>
           <div className="space-y-3">
             {[...entries].sort((a, b) => b.rating - a.rating || b.coachScore - a.coachScore).slice(0, 6).map((player, index) => (
@@ -167,7 +154,7 @@ export function CityLeaderboard() {
         <div className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-5">
           <div className="mb-5 flex items-center gap-3">
             <History className="h-5 w-5 text-[var(--mint)]" />
-            <h3 className="font-[var(--font-display)] text-2xl font-bold">Recent Reviews</h3>
+            <h3 className="font-[var(--font-display)] text-2xl font-bold">{t("recentReviews")}</h3>
           </div>
           <RecentActivity reviews={recentReviews} />
         </div>
@@ -212,20 +199,22 @@ function ArenaStat({ label, value, detail, icon }: { label: string; value: strin
 }
 
 function CurrentPlayerCard({ player, rank, signedIn }: { player: PlayerProfile; rank: number | null; signedIn: boolean }) {
+  const { t, locale } = useI18n();
+  const ru = locale === "ru";
   return (
     <div className="mt-6 overflow-hidden rounded-[1.5rem] border border-[var(--mint)]/25 bg-[rgba(118,247,203,0.08)] p-5">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.22em] text-[var(--mint)]">
-            <Target className="h-4 w-4" /> Your Rank
+            <Target className="h-4 w-4" /> {t("yourRank")}
           </p>
-          <h3 className="mt-2 font-[var(--font-display)] text-3xl font-black">{formatRank(rank)} · {player.displayName}</h3>
+          <h3 className="mt-2 font-[var(--font-display)] text-3xl font-black">{formatRank(rank, locale)} · {player.displayName}</h3>
           <p className="mt-2 text-sm text-slate-300">
-            {player.games} games · {player.reviews} reviewed · {player.wins}-{player.losses}-{player.draws}
+            {player.games} · {player.reviews} {ru ? "разобрано" : "reviewed"} · {player.wins}-{player.losses}-{player.draws}
           </p>
           <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold">
             <span className="rounded-full border border-white/10 bg-slate-950/45 px-3 py-1 text-slate-300">
-              {signedIn ? "Rank saved" : "Guest profile · this device"}
+              {signedIn ? t("rankSaved") : `${t("guestProfile")} · ${t("thisDevice")}`}
             </span>
             {player.isPro ? (
               <span className="inline-flex items-center gap-1 rounded-full border border-[var(--gold)]/35 bg-[rgba(248,200,106,0.12)] px-3 py-1 text-[var(--gold)]">
@@ -235,9 +224,9 @@ function CurrentPlayerCard({ player, rank, signedIn }: { player: PlayerProfile; 
           </div>
         </div>
         <div className="grid grid-cols-3 gap-3 text-center">
-          <MiniStat label="Rating" value={player.rating.toString()} />
-          <MiniStat label="Coach" value={player.coachScore.toString()} />
-          <MiniStat label="Badges" value={player.badges.length.toString()} />
+          <MiniStat label={ru ? "Рейтинг" : "Rating"} value={player.rating.toString()} />
+          <MiniStat label={ru ? "Тренер" : "Coach"} value={player.coachScore.toString()} />
+          <MiniStat label={ru ? "Бейджи" : "Badges"} value={player.badges.length.toString()} />
         </div>
       </div>
       <BadgeList badges={player.badges} />
@@ -246,23 +235,25 @@ function CurrentPlayerCard({ player, rank, signedIn }: { player: PlayerProfile; 
 }
 
 function GuestProfileState() {
+  const { t, locale } = useI18n();
+  const ru = locale === "ru";
   return (
     <div className="mt-6 rounded-[1.5rem] border border-[var(--gold)]/25 bg-[rgba(248,200,106,0.08)] p-5">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <p className="flex items-center gap-2 font-[var(--font-display)] text-xl font-bold">
-            <UserRound className="h-5 w-5 text-[var(--gold)]" /> Sign in to save your rank across devices.
+            <UserRound className="h-5 w-5 text-[var(--gold)]" /> {ru ? "Войдите, чтобы сохранять ранг на разных устройствах." : "Sign in to save your rank across devices."}
           </p>
           <p className="mt-2 text-sm leading-6 text-slate-300">
-            You can keep playing as a guest, then save progress when you are ready.
+            {ru ? "Можно играть гостем и сохранить прогресс позже." : "You can keep playing as a guest, then save progress when you are ready."}
           </p>
         </div>
         <div className="flex flex-wrap gap-3">
           <Button asChild>
-            <Link href="/auth">Sign in</Link>
+            <Link href="/auth">{t("signIn")}</Link>
           </Button>
           <Button asChild variant="secondary">
-            <Link href="/lobby">Continue as guest</Link>
+            <Link href="/lobby">{ru ? "Продолжить гостем" : "Continue as guest"}</Link>
           </Button>
         </div>
       </div>
@@ -287,9 +278,9 @@ function Podium({ entries }: { entries: LeaderboardEntry[] }) {
               {player.isPro ? <FounderBadge /> : null}
             </div>
             <div className="mt-5 flex items-center gap-3">
-              <Avatar name={player.name} large={champion} />
+              <Avatar name={displayPlayerName(player)} large={champion} />
               <div>
-                <p className="font-[var(--font-display)] text-xl font-bold">{player.name}</p>
+                <p className="font-[var(--font-display)] text-xl font-bold">{displayPlayerName(player)}</p>
                 <p className="text-xs text-slate-400">{player.city}</p>
               </div>
             </div>
@@ -306,6 +297,8 @@ function Podium({ entries }: { entries: LeaderboardEntry[] }) {
 }
 
 function PlayerRow({ player, rank }: { player: LeaderboardEntry; rank: number }) {
+  const { t, locale } = useI18n();
+  const ru = locale === "ru";
   return (
     <div className={`grid gap-3 p-4 transition hover:bg-white/[0.04] lg:grid-cols-[4.5rem_1.4fr_0.8fr_0.8fr_0.8fr_1fr_0.9fr] lg:items-center ${player.isCurrentPlayer ? "bg-[rgba(118,247,203,0.09)]" : ""}`}>
       <div className="flex items-center justify-between lg:block">
@@ -316,53 +309,57 @@ function PlayerRow({ player, rank }: { player: LeaderboardEntry; rank: number })
       </div>
       <div className="min-w-0">
         <p className="flex flex-wrap items-center gap-2 font-semibold">
-          <Avatar name={player.name} />
-          <span className="truncate">{player.name}</span>
-          {player.isCurrentPlayer ? <span className="rounded-full bg-[var(--mint)] px-2 py-0.5 text-[0.65rem] font-bold text-slate-950">YOU</span> : null}
+          <Avatar name={displayPlayerName(player)} />
+          <span className="truncate">{displayPlayerName(player)}</span>
+          {player.isCurrentPlayer ? <span className="rounded-full bg-[var(--mint)] px-2 py-0.5 text-[0.65rem] font-bold text-slate-950">{ru ? "Вы" : "You"}</span> : null}
           {player.isPro ? <FounderBadge compact /> : null}
         </p>
       </div>
-      <Metric label="City" value={player.city} />
-      <Metric label="Arena Rating" value={player.rating.toString()} strong />
-      <Metric label="Coach Score" value={player.coachScore.toString()} />
+      <Metric label={t("city")} value={player.city} />
+      <Metric label={ru ? "Рейтинг арены" : "Arena Rating"} value={player.rating.toString()} strong />
+      <Metric label={ru ? "Оценка тренера" : "Coach Score"} value={player.coachScore.toString()} />
       <div>
-        <p className="text-xs text-slate-500 lg:hidden">Badges</p>
+        <p className="text-xs text-slate-500 lg:hidden">{ru ? "Бейджи" : "Badges"}</p>
         <BadgeList badges={player.badges.slice(0, 2)} compact />
       </div>
-      <Metric label="Last Review" value={formatLastActive(player.lastPlayedAt)} icon={<CalendarDays className="h-3.5 w-3.5" />} />
+      <Metric label={ru ? "Последний разбор" : "Last Review"} value={formatLastActive(player.lastPlayedAt, locale)} icon={<CalendarDays className="h-3.5 w-3.5" />} />
     </div>
   );
 }
 
 function CompactPlayer({ player, rank }: { player: LeaderboardEntry; rank: number }) {
+  const { locale } = useI18n();
+  const ru = locale === "ru";
   return (
     <div className={`grid grid-cols-[2.5rem_1fr_auto] items-center gap-3 rounded-[1.25rem] border p-3 ${player.isCurrentPlayer ? "border-[var(--mint)]/35 bg-[rgba(118,247,203,0.1)]" : "border-white/10 bg-slate-950/35"}`}>
       <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-950/70 font-[var(--font-display)] font-bold">{rank}</div>
       <div className="min-w-0">
         <p className="flex items-center gap-2 truncate font-semibold">
-          <span className="truncate">{player.name}</span>
+          <span className="truncate">{displayPlayerName(player)}</span>
           {player.isPro ? <Crown className="h-4 w-4 shrink-0 text-[var(--gold)]" /> : null}
         </p>
-        <p className="mt-1 text-xs text-slate-400">{player.city} · {player.reviews} reviewed</p>
+        <p className="mt-1 text-xs text-slate-400">{player.city} · {player.reviews} {ru ? "разобрано" : "reviewed"}</p>
       </div>
       <div className="text-right">
         <p className="font-[var(--font-display)] text-xl font-bold">{player.rating}</p>
-        <p className="text-xs text-[var(--mint)]">coach {player.coachScore}</p>
+        <p className="text-xs text-[var(--mint)]">{ru ? "тренер" : "coach"} {player.coachScore}</p>
       </div>
     </div>
   );
 }
 
 function EmptyCityState({ city }: { city: CityFilter }) {
+  const { t, locale } = useI18n();
+  const ru = locale === "ru";
   return (
     <div className="p-5">
       <div className="rounded-[1.25rem] border border-[var(--gold)]/25 bg-[rgba(248,200,106,0.08)] p-5">
-        <p className="font-[var(--font-display)] text-xl font-bold">Be the first player on this city board.</p>
+        <p className="font-[var(--font-display)] text-xl font-bold">{ru ? "Станьте первым игроком на этой доске." : "Be the first player on this city board."}</p>
         <p className="mt-2 text-sm leading-6 text-slate-300">
-          Play a game, run your coach review, and your arena score will appear here{city === "All Cities" ? "." : ` for ${city}.`}
+          {ru ? "Сыграйте партию, откройте разбор, и ваш рейтинг появится здесь" : "Play a game, run your coach review, and your arena score will appear here"}{city === "All Cities" ? "." : ` ${ru ? "для" : "for"} ${city}.`}
         </p>
         <Button asChild className="mt-4">
-          <Link href="/lobby">Start a Game</Link>
+          <Link href="/lobby">{t("startGame")}</Link>
         </Button>
       </div>
     </div>
@@ -370,8 +367,10 @@ function EmptyCityState({ city }: { city: CityFilter }) {
 }
 
 function RecentActivity({ reviews }: { reviews: GameReviewRecord[] }) {
+  const { locale } = useI18n();
+  const ru = locale === "ru";
   if (!reviews.length) {
-    return <p className="rounded-[1.25rem] border border-white/10 bg-slate-950/35 p-4 text-sm leading-6 text-slate-300">No reviewed games yet. Analyze a game and this becomes your training activity feed.</p>;
+    return <p className="rounded-[1.25rem] border border-white/10 bg-slate-950/35 p-4 text-sm leading-6 text-slate-300">{ru ? "Разобранных партий пока нет. Сделайте разбор, и здесь появится лента тренировок." : "No reviewed games yet. Analyze a game and this becomes your training activity feed."}</p>;
   }
 
   return (
@@ -379,9 +378,9 @@ function RecentActivity({ reviews }: { reviews: GameReviewRecord[] }) {
       {reviews.map((review) => (
         <div key={`${review.gameId}-${review.playerId}`} className="rounded-[1.25rem] border border-white/10 bg-slate-950/35 p-4">
           <p className="flex items-center gap-2 font-semibold">
-            <Sparkles className="h-4 w-4 text-[var(--mint)]" /> {review.displayName}
+            <Sparkles className="h-4 w-4 text-[var(--mint)]" /> {sanitizeDemoName(review.displayName)}
           </p>
-          <p className="mt-1 text-xs text-slate-400">{review.city} · accuracy {review.accuracy}% · {review.blunders} blunders</p>
+          <p className="mt-1 text-xs text-slate-400">{review.city} · {ru ? "точность" : "accuracy"} {review.accuracy}% · {review.blunders} {ru ? "зевков" : "blunders"}</p>
           <p className="mt-2 text-xs leading-5 text-slate-300">{review.summary}</p>
         </div>
       ))}
@@ -390,7 +389,8 @@ function RecentActivity({ reviews }: { reviews: GameReviewRecord[] }) {
 }
 
 function BadgeList({ badges, compact }: { badges: string[]; compact?: boolean }) {
-  if (!badges.length) return <p className={`${compact ? "mt-1" : "mt-3"} text-xs text-slate-500`}>Badges unlock after reviewed games.</p>;
+  const { t } = useI18n();
+  if (!badges.length) return <p className={`${compact ? "mt-1" : "mt-3"} text-xs text-slate-500`}>{t("badgesUnlock")}</p>;
 
   return (
     <div className={`${compact ? "mt-1" : "mt-3"} flex flex-wrap gap-2 ${compact ? "text-[0.65rem]" : "text-xs"}`}>
@@ -438,15 +438,26 @@ function FounderBadge({ compact }: { compact?: boolean }) {
   );
 }
 
-function formatRank(rank: number | null) {
-  return rank ? `#${rank}` : "Unranked";
+function formatRank(rank: number | null, locale: string = "en") {
+  return rank ? `#${rank}` : locale === "ru" ? "Без ранга" : "Unranked";
 }
 
-function formatLastActive(value: string | null | undefined) {
-  if (!value) return "New";
+function formatLastActive(value: string | null | undefined, locale: string = "en") {
+  if (!value) return locale === "ru" ? "Новый" : "New";
   const days = Math.floor((Date.now() - new Date(value).getTime()) / (24 * 60 * 60 * 1000));
-  if (days <= 0) return "Today";
-  if (days === 1) return "Yesterday";
+  if (days <= 0) return locale === "ru" ? "Сегодня" : "Today";
+  if (days === 1) return locale === "ru" ? "Вчера" : "Yesterday";
   if (days < 7) return `${days}d ago`;
   return "7d+";
+}
+
+function displayPlayerName(player: Pick<LeaderboardEntry, "name" | "rank" | "isCurrentPlayer">) {
+  if (player.isCurrentPlayer) return player.name;
+  return sanitizeDemoName(player.name, player.rank);
+}
+
+function sanitizeDemoName(name: string, index = 1) {
+  if (!/(codex|qa|phase|test user|local)/i.test(name)) return name;
+  const names = ["Amina N.", "Nursultan K.", "Gordon Ramzi", "Timur S.", "Alina B.", "Miras A.", "Dana K.", "Dias M."];
+  return names[Math.abs(index - 1) % names.length];
 }

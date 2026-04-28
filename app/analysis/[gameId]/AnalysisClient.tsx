@@ -16,6 +16,7 @@ import type { CoachPersonality, EnhancedCoachReview } from "@/lib/coach-review";
 import { createLeaderboardAdapter } from "@/lib/leaderboard";
 import { loadProStatus, type ProStatus } from "@/lib/pro";
 import { loadGameReview } from "@/lib/storage";
+import { useI18n } from "@/lib/i18n";
 import type { LeaderboardUpdateResult, MoveEvaluation } from "@/lib/types";
 
 const demoPgn = "1. e4 e5 2. Nf3 Nc6 3. Bc4 Bc5 4. c3 Nf6 5. d4 exd4 6. e5 d5 7. exf6 dxc4 8. fxg7 Rg8";
@@ -24,6 +25,7 @@ const coachPersonalities: CoachPersonality[] = ["Friendly Coach", "Strict Coach"
 const initialProStatus: ProStatus = { isPro: false, status: "free", plan: "free", provider: "local" };
 
 export function AnalysisClient({ gameId }: { gameId: string }) {
+  const { t } = useI18n();
   const [review, setReview] = useState<ReviewState | null>(null);
   const [leaderboardUpdate, setLeaderboardUpdate] = useState<LeaderboardUpdateResult | null>(null);
   const [personality, setPersonality] = useState<CoachPersonality>("Friendly Coach");
@@ -158,17 +160,17 @@ export function AnalysisClient({ gameId }: { gameId: string }) {
           <Card className="w-full overflow-hidden p-0">
             <div className="relative p-8 md:p-10">
               <div className="absolute right-0 top-0 h-56 w-56 rounded-full bg-[var(--mint)]/10 blur-3xl" />
-              <p className="text-sm font-semibold uppercase tracking-[0.3em] text-[var(--mint)]">No review found</p>
-              <h1 className="mt-3 font-[var(--font-display)] text-4xl font-black tracking-[-0.04em]">This coach room is empty.</h1>
+              <p className="text-sm font-semibold tracking-[0.12em] text-[var(--mint)]">{t("noReviewFound")}</p>
+              <h1 className="mt-3 font-[var(--font-display)] text-4xl font-bold tracking-[-0.03em]">{t("emptyCoachRoom")}</h1>
               <p className="mt-4 max-w-2xl text-sm leading-6 text-slate-300">
                 I could not find saved moves for <span className="font-semibold text-white">{gameId}</span>. Play a local game or friend room first, then tap Analyze Game so the coach can replay the actual moves.
               </p>
               <div className="mt-7 flex flex-wrap gap-3">
                 <Button asChild>
-                  <Link href="/lobby">Start from lobby</Link>
+                  <Link href="/lobby">{t("startFromLobby")}</Link>
                 </Button>
                 <Button asChild variant="secondary">
-                  <Link href="/analysis/demo">View demo review</Link>
+                  <Link href="/analysis/demo">{t("viewDemoReview")}</Link>
                 </Button>
               </div>
             </div>
@@ -184,21 +186,21 @@ export function AnalysisClient({ gameId }: { gameId: string }) {
         <section className="space-y-5">
           <Button asChild variant="secondary">
             <Link href="/lobby">
-              <ArrowLeft className="h-4 w-4" /> Back to lobby
+              <ArrowLeft className="h-4 w-4" /> {t("lobby")}
             </Link>
           </Button>
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-[var(--mint)]">Game review</p>
-            <h1 className="mt-2 font-[var(--font-display)] text-4xl font-black tracking-[-0.04em]">Coach room</h1>
+            <p className="text-sm font-semibold tracking-[0.12em] text-[var(--mint)]">{t("gameReview")}</p>
+            <h1 className="mt-2 font-[var(--font-display)] text-4xl font-bold tracking-[-0.03em]">{t("coachRoom")}</h1>
             <p className="mt-2 max-w-xl text-sm leading-6 text-slate-400">
-              Coach review replaying {formatPlyCount(review?.moves.length ?? 0)} from this exact game. Generate a deeper note when you want extra training ideas.
+              {t("coachReview")} · {formatPlyCount(review?.moves.length ?? 0)}. {t("generateDeeperReview")} when you want extra training ideas.
             </p>
           </div>
           {review ? <ChessBoardPanel fen={review.fen} locked /> : <BoardSkeleton />}
           <Card className="p-5">
             <div className="mb-4 flex items-center gap-2">
               <Medal className="h-5 w-5 text-[var(--gold)]" />
-              <h2 className="font-[var(--font-display)] text-xl font-bold">Move archive</h2>
+              <h2 className="font-[var(--font-display)] text-xl font-bold">{t("moveArchive")}</h2>
             </div>
             <MoveHistory moves={review?.moves ?? []} />
           </Card>
@@ -222,8 +224,8 @@ export function AnalysisClient({ gameId }: { gameId: string }) {
               <Card className="p-5">
                 <div className="mb-4 flex items-center justify-between gap-3">
                   <div>
-                    <p className="text-sm font-semibold uppercase tracking-[0.25em] text-[var(--mint)]">Move timeline</p>
-                    <h2 className="mt-1 font-[var(--font-display)] text-2xl font-bold">What changed</h2>
+                  <p className="text-sm font-semibold tracking-[0.12em] text-[var(--mint)]">{t("moveTimeline")}</p>
+                  <h2 className="mt-1 font-[var(--font-display)] text-2xl font-bold">{t("whatChanged")}</h2>
                   </div>
                   <Sparkles className="h-5 w-5 text-[var(--gold)]" />
                 </div>
@@ -232,7 +234,7 @@ export function AnalysisClient({ gameId }: { gameId: string }) {
               <Card className="p-5">
                 <div className="mb-4 flex items-center gap-2">
                   <BarChart3 className="h-5 w-5 text-[var(--mint)]" />
-                  <h2 className="font-[var(--font-display)] text-2xl font-bold">Material swing</h2>
+                  <h2 className="font-[var(--font-display)] text-2xl font-bold">{t("materialSwing")}</h2>
                 </div>
                 <MaterialSwing timeline={analysis.materialTimeline} />
               </Card>
@@ -240,14 +242,14 @@ export function AnalysisClient({ gameId }: { gameId: string }) {
           ) : null}
           {analysis ? (
             <Card className="p-5">
-              <h2 className="font-[var(--font-display)] text-2xl font-bold">Phase advice</h2>
+              <h2 className="font-[var(--font-display)] text-2xl font-bold">{t("phaseAdvice")}</h2>
               <div className="mt-4 grid gap-3">
-                <Phase title="Opening" body={analysis.phaseAdvice.opening} />
-                <Phase title="Middlegame" body={analysis.phaseAdvice.middlegame} />
-                <Phase title="Endgame" body={analysis.phaseAdvice.endgame} />
+                <Phase title={t("opening")} body={analysis.phaseAdvice.opening} />
+                <Phase title={t("middlegame")} body={analysis.phaseAdvice.middlegame} />
+                <Phase title={t("endgame")} body={analysis.phaseAdvice.endgame} />
               </div>
               <Button asChild className="mt-5">
-                <Link href="/leaderboard">See city leaderboard</Link>
+                <Link href="/leaderboard">{t("leaderboard")}</Link>
               </Button>
             </Card>
           ) : null}
@@ -274,6 +276,7 @@ function EnhancedCoachPanel({
   onGenerate: () => void;
   proActive: boolean;
 }) {
+  const { t } = useI18n();
   const [answerVisible, setAnswerVisible] = useState(false);
 
   return (
@@ -282,34 +285,34 @@ function EnhancedCoachPanel({
         <div className="pointer-events-none absolute right-0 top-0 h-40 w-40 rounded-full bg-[var(--gold)]/10 blur-2xl" />
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.25em] text-[var(--gold)]">Deeper AI Coach</p>
-            <h2 className="mt-2 font-[var(--font-display)] text-2xl font-bold">Blunder-to-puzzle review</h2>
+            <p className="text-sm font-semibold tracking-[0.12em] text-[var(--gold)]">{t("deeperReview")}</p>
+            <h2 className="mt-2 font-[var(--font-display)] text-2xl font-bold">{t("positionDrill")}</h2>
             <p className="mt-2 max-w-xl text-sm leading-6 text-slate-300">
-              Generate a richer coach note from the game facts, then save the puzzle with this review.
+              {t("generateDeeperReview")}
             </p>
           </div>
           <span className="w-fit rounded-full border border-white/10 bg-slate-950/50 px-3 py-1 text-xs font-semibold text-slate-200">
-            {review?.provider === "gemini" ? "Gemini AI Coach" : "Quick Coach Review"}
+            {review?.provider === "gemini" ? t("deeperReview") : t("quickReview")}
           </span>
         </div>
 
         <div className="mt-4 flex flex-wrap items-center gap-2 text-xs font-semibold">
           <span className="inline-flex items-center gap-1 rounded-full border border-[var(--gold)]/30 bg-[rgba(248,200,106,0.1)] px-3 py-1 text-[var(--gold)]">
-            <Crown className="h-3.5 w-3.5" /> {proActive ? "Founder Pro active" : "Pro-level demo feature"}
+            <Crown className="h-3.5 w-3.5" /> {proActive ? t("proActive") : t("proUnlock")}
           </span>
           {!proActive ? (
             <Link href="/pro" className="rounded-full border border-white/10 bg-slate-950/45 px-3 py-1 text-slate-300 transition hover:text-white">
-              Upgrade demo
+              {t("upgradeToProDemo")}
             </Link>
           ) : null}
         </div>
 
         <div className="mt-5 grid gap-3 sm:grid-cols-[1fr_auto]">
           <Select value={personality} onChange={(event) => onPersonalityChange(event.target.value as CoachPersonality)}>
-            {coachPersonalities.map((item) => <option key={item}>{item}</option>)}
+            {coachPersonalities.map((item) => <option key={item} value={item}>{personalityLabel(item, t)}</option>)}
           </Select>
           <Button onClick={onGenerate} disabled={loading}>
-            <Sparkles className="h-4 w-4" /> {loading ? "Reviewing..." : "Generate deeper AI review"}
+            <Sparkles className="h-4 w-4" /> {loading ? t("reviewing") : t("generateDeeperReview")}
           </Button>
         </div>
 
@@ -318,16 +321,16 @@ function EnhancedCoachPanel({
         {review ? (
           <div className="mt-5 space-y-4">
             <div className="rounded-[1.25rem] border border-[var(--mint)]/25 bg-[rgba(118,247,203,0.08)] p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--mint)]">Shareable headline</p>
+              <p className="text-xs font-semibold tracking-[0.12em] text-[var(--mint)]">{t("shareableHeadline")}</p>
               <p className="mt-2 font-[var(--font-display)] text-xl font-bold">{review.shareHeadline}</p>
               <p className="mt-2 text-sm leading-6 text-slate-300">{review.summary}</p>
             </div>
             <div className="grid gap-3 md:grid-cols-2">
-              <CoachTextBlock title="Biggest mistake" body={review.biggestMistakeExplanation} tone="danger" />
-              <CoachTextBlock title="Better move" body={review.betterMoveExplanation} />
+              <CoachTextBlock title={t("biggestMistake")} body={review.biggestMistakeExplanation} tone="danger" />
+              <CoachTextBlock title={t("betterMove")} body={review.betterMoveExplanation} />
             </div>
             <div className="rounded-[1.25rem] border border-white/10 bg-white/[0.04] p-4">
-              <p className="font-semibold text-white">Personalized tips</p>
+              <p className="font-semibold text-white">{t("personalizedTips")}</p>
               <ul className="mt-3 grid gap-2 text-sm text-slate-300">
                 {review.trainingTips.map((tip, index) => (
                   <li key={`${index}-${tip}`} className="rounded-2xl border border-white/10 bg-slate-950/35 p-3">{tip}</li>
@@ -335,29 +338,29 @@ function EnhancedCoachPanel({
               </ul>
             </div>
             <div className="grid gap-3 md:grid-cols-3">
-              <Phase title="Opening" body={review.phaseAdvice.opening} />
-              <Phase title="Middlegame" body={review.phaseAdvice.middlegame} />
-              <Phase title="Endgame" body={review.phaseAdvice.endgame} />
+              <Phase title={t("opening")} body={review.phaseAdvice.opening} />
+              <Phase title={t("middlegame")} body={review.phaseAdvice.middlegame} />
+              <Phase title={t("endgame")} body={review.phaseAdvice.endgame} />
             </div>
-            <CoachTextBlock title="Training drill" body={review.trainingDrill} />
+            <CoachTextBlock title={t("trainingDrill")} body={review.trainingDrill} />
             <div className="rounded-[1.25rem] border border-[var(--gold)]/30 bg-[rgba(248,200,106,0.08)] p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--gold)]">Find the better move</p>
+              <p className="text-xs font-semibold tracking-[0.12em] text-[var(--gold)]">{t("betterMove")}</p>
               {review.puzzle.fen ? <p className="mt-2 break-all rounded-xl bg-slate-950/45 p-3 text-xs text-slate-400">FEN: {review.puzzle.fen}</p> : null}
               <p className="mt-3 text-sm leading-6 text-slate-200">{review.puzzle.question}</p>
               {answerVisible ? (
                 <div className="mt-3 rounded-xl border border-white/10 bg-slate-950/45 p-3 text-sm text-slate-300">
-                  <p className="font-semibold text-white">Answer: {review.puzzle.answerMove}</p>
+                  <p className="font-semibold text-white">{t("answer")}: {review.puzzle.answerMove}</p>
                   <p className="mt-1 leading-6">{review.puzzle.explanation}</p>
                 </div>
               ) : null}
               <Button className="mt-4" variant="secondary" onClick={() => setAnswerVisible((value) => !value)}>
-                {answerVisible ? "Hide answer" : "Reveal answer"}
+                {answerVisible ? t("hideAnswer") : t("revealAnswer")}
               </Button>
             </div>
           </div>
         ) : (
           <div className="mt-5 rounded-[1.25rem] border border-white/10 bg-white/[0.04] p-4 text-sm leading-6 text-slate-300">
-            Your baseline review is ready. Generate the deeper version to create a saved coach note and puzzle.
+            {t("quickReview")} ready. {t("generateDeeperReview")}
           </div>
         )}
       </div>
@@ -374,7 +377,16 @@ function CoachTextBlock({ title, body, tone = "default" }: { title: string; body
   );
 }
 
+function personalityLabel(personality: CoachPersonality, t: ReturnType<typeof useI18n>["t"]) {
+  if (personality === "Friendly Coach") return t("friendlyCoach");
+  if (personality === "Strict Coach") return t("strictCoach");
+  if (personality === "BigTech Interview Coach") return t("interviewCoach");
+  return t("memeCoach");
+}
+
 function RankingUpdateCard({ update }: { update: LeaderboardUpdateResult }) {
+  const { t, locale } = useI18n();
+  const ru = locale === "ru";
   return (
     <Card className="overflow-hidden p-0">
       <div className="relative p-5">
@@ -382,34 +394,36 @@ function RankingUpdateCard({ update }: { update: LeaderboardUpdateResult }) {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.24em] text-[var(--mint)]">
-              <Trophy className="h-4 w-4" /> City ranking updated
+              <Trophy className="h-4 w-4" /> {ru ? "Ранг обновлён" : "City ranking updated"}
             </p>
             <h2 className="mt-2 font-[var(--font-display)] text-2xl font-bold">
-              {update.alreadyCounted ? "This review is already counted." : `You are #${update.cityRank} in ${update.player.city}.`}
+              {update.alreadyCounted ? (ru ? "Этот разбор уже учтён." : "This review is already counted.") : `${ru ? "Вы" : "You are"} #${update.cityRank} ${ru ? "в" : "in"} ${update.player.city}.`}
             </h2>
             <p className="mt-2 text-sm leading-6 text-slate-300">
               {update.alreadyCounted
-                ? "Refresh-safe progression is on, so games and reviews do not increment twice for the same analysis."
-                : `${update.player.displayName} gained ${formatDelta(update.ratingChange)} rating and ${formatDelta(update.coachScoreChange)} coach score from this review.`}
+                ? (ru ? "Прогресс не начисляется дважды за один и тот же разбор." : "Progress does not increment twice for the same analysis.")
+                : ru
+                  ? `${update.player.displayName}: ${formatDelta(update.ratingChange)} к рейтингу и ${formatDelta(update.coachScoreChange)} к оценке тренера.`
+                  : `${update.player.displayName} gained ${formatDelta(update.ratingChange)} rating and ${formatDelta(update.coachScoreChange)} coach score from this review.`}
             </p>
             <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold text-slate-300">
               <span className="rounded-full border border-white/10 bg-slate-950/45 px-3 py-1">
-                {update.adapterMode === "supabase" ? "Rank saved" : "Guest profile"}
+                {update.adapterMode === "supabase" ? t("rankSaved") : t("guestProfile")}
               </span>
               <span className="rounded-full border border-white/10 bg-slate-950/45 px-3 py-1">
-                Rank {formatRank(update.oldRank)} to {formatRank(update.newRank)}
+                {t("rank")} {formatRank(update.oldRank)} → {formatRank(update.newRank)}
               </span>
               {update.badgesEarned.length ? update.badgesEarned.map((badge) => (
                 <span key={badge} className="rounded-full border border-[var(--gold)]/25 bg-[rgba(248,200,106,0.1)] px-3 py-1 text-[var(--gold)]">
                   {badge}
                 </span>
               )) : (
-                <span className="rounded-full border border-white/10 bg-slate-950/45 px-3 py-1">No new badges</span>
+                <span className="rounded-full border border-white/10 bg-slate-950/45 px-3 py-1">{ru ? "Новых бейджей нет" : "No new badges"}</span>
               )}
             </div>
           </div>
           <Button asChild>
-            <Link href="/leaderboard">View City Leaderboard</Link>
+            <Link href="/leaderboard">{t("leaderboard")}</Link>
           </Button>
         </div>
       </div>

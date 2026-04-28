@@ -10,14 +10,19 @@ import { Card } from "@/components/ui/card";
 import { activateDemoPro, loadProStatus, type ProStatus } from "@/lib/pro";
 import { useI18n } from "@/lib/i18n";
 
-const freeFeatures = ["Local games", "Friend rooms", "Engine-lite review", "City leaderboard"];
-const proFeatures = ["Gemini coach review", "Blunder-to-puzzle drills", "Personalized training plan", "Founder Pro badge"];
 const initialProStatus: ProStatus = { isPro: false, status: "free", plan: "free", provider: "local" };
 
 export default function ProPage() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
+  const ru = locale === "ru";
   const [status, setStatus] = useState<ProStatus>(initialProStatus);
   const [upgrading, setUpgrading] = useState(false);
+  const freeFeatures = ru
+    ? ["ÐŸÐ°Ñ€Ñ‚Ð¸Ð¸ Ð½Ð° Ð¾Ð´Ð½Ð¾Ð¼ ÑƒÑÑ‚Ñ€Ð¾Ð¹ÑÑ‚Ð²Ðµ", "ÐšÐ¾Ð¼Ð½Ð°Ñ‚Ñ‹ Ñ Ð´Ñ€ÑƒÐ³Ð¾Ð¼", "Ð‘Ñ‹ÑÑ‚Ñ€Ñ‹Ð¹ Ñ€Ð°Ð·Ð±Ð¾Ñ€", "Ð“Ð¾Ñ€Ð¾Ð´ÑÐºÐ¾Ð¹ Ñ€ÐµÐ¹Ñ‚Ð¸Ð½Ð³"]
+    : ["Same-device games", "Friend rooms", "Quick coach review", "City leaderboard"];
+  const proFeatures = ru
+    ? ["Ð£Ð³Ð»ÑƒÐ±Ð»Ñ‘Ð½Ð½Ñ‹Ð¹ Ñ€Ð°Ð·Ð±Ð¾Ñ€", "Ð—Ð°Ð´Ð°Ñ‡Ð¸ Ð¸Ð· Ð¾ÑˆÐ¸Ð±Ð¾Ðº", "Ð›Ð¸Ñ‡Ð½Ñ‹Ð¹ Ð¿Ð»Ð°Ð½ Ñ‚Ñ€ÐµÐ½Ð¸Ñ€Ð¾Ð²ÐºÐ¸", "Ð‘ÐµÐ¹Ð´Ð¶ Founder Pro"]
+    : ["Deeper coach review", "Blunder-to-puzzle drills", "Personalized training plan", "Founder Pro badge"];
 
   useEffect(() => {
     startTransition(() => setStatus(loadProStatus()));
@@ -57,7 +62,7 @@ export default function ProPage() {
                   <Crown className="h-5 w-5 text-[var(--gold)]" /> Pro
                 </p>
                 <p className="mt-3 text-4xl font-black">$9<span className="text-sm font-semibold text-slate-300">/mo</span></p>
-                <p className="mt-2 text-sm text-slate-300">Founder Demo access. No card fields, no Stripe, no real charge.</p>
+                <p className="mt-2 text-sm text-slate-300">{ru ? "Ð”Ð¾ÑÑ‚ÑƒÐ¿ Founder Demo. Ð‘ÐµÐ· ÐºÐ°Ñ€Ñ‚Ñ‹ Ð¸ Ñ€ÐµÐ°Ð»ÑŒÐ½Ð¾Ð¹ Ð¾Ð¿Ð»Ð°Ñ‚Ñ‹." : "Founder Demo access. No card fields and no real charge."}</p>
                 <ul className="mt-6 space-y-3 text-sm text-slate-100">
                   {proFeatures.map((feature) => (
                     <li key={feature} className="flex gap-2"><Check className="mt-0.5 h-4 w-4 text-[var(--mint)]" /> {feature}</li>
@@ -76,31 +81,31 @@ export default function ProPage() {
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div>
                 <p className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.24em] text-[var(--mint)]">
-                  <BadgeCheck className="h-4 w-4" /> Founder Pro active
+                  <BadgeCheck className="h-4 w-4" /> {t("proActive")}
                 </p>
-                <h2 className="mt-2 font-[var(--font-display)] text-3xl font-bold">Your profile is ready for the Pro demo track.</h2>
-                <p className="mt-2 text-sm text-slate-300">Status persists after refresh and stays with your profile.</p>
+                <h2 className="mt-2 font-[var(--font-display)] text-3xl font-bold">{ru ? "ÐŸÑ€Ð¾Ñ„Ð¸Ð»ÑŒ Ð³Ð¾Ñ‚Ð¾Ð² Ðº Pro Demo." : "Your profile is ready for the Pro demo track."}</h2>
+                <p className="mt-2 text-sm text-slate-300">{ru ? "Ð¡Ñ‚Ð°Ñ‚ÑƒÑ ÑÐ¾Ñ…Ñ€Ð°Ð½ÑÐµÑ‚ÑÑ Ð¿Ð¾ÑÐ»Ðµ Ð¾Ð±Ð½Ð¾Ð²Ð»ÐµÐ½Ð¸Ñ." : "Status persists after refresh and stays with your profile."}</p>
               </div>
               <Button asChild>
-                <Link href="/leaderboard">View badge on leaderboard <ArrowRight className="h-4 w-4" /></Link>
+                <Link href="/leaderboard">{ru ? "ÐŸÐ¾ÐºÐ°Ð·Ð°Ñ‚ÑŒ Ð±ÐµÐ¹Ð´Ð¶ Ð² Ñ€ÐµÐ¹Ñ‚Ð¸Ð½Ð³Ðµ" : "View badge on leaderboard"} <ArrowRight className="h-4 w-4" /></Link>
               </Button>
             </div>
           </section>
         ) : null}
 
         <section className="mt-10 grid gap-4 md:grid-cols-4">
-          <ValueCard icon={<Brain />} title="AI Coach" body="Concise feedback grounded in engine-lite facts with Gemini tone layered on top." />
-          <ValueCard icon={<Puzzle />} title="Blunder puzzle" body="The biggest mistake becomes a revealable training card." />
-          <ValueCard icon={<Share2 />} title="Shareable story" body="A headline and coach summary make the review easy to pitch." />
-          <ValueCard icon={<Trophy />} title="City status" body="Founder Pro badge travels into the profile and leaderboard surfaces." />
+          <ValueCard icon={<Brain />} title={ru ? "Ð Ð°Ð·Ð±Ð¾Ñ€ Ñ‚Ñ€ÐµÐ½ÐµÑ€Ð°" : "Coach review"} body={ru ? "ÐšÐ¾Ñ€Ð¾Ñ‚ÐºÐ°Ñ Ð¾Ð±Ñ€Ð°Ñ‚Ð½Ð°Ñ ÑÐ²ÑÐ·ÑŒ Ð¿Ñ€ÐµÐ²Ñ€Ð°Ñ‰Ð°ÐµÑ‚ Ð¿Ð°Ñ€Ñ‚Ð¸ÑŽ Ð² Ð¿Ð¾Ð½ÑÑ‚Ð½Ñ‹Ð¹ Ð¿Ð»Ð°Ð½ Ñ‚Ñ€ÐµÐ½Ð¸Ñ€Ð¾Ð²ÐºÐ¸." : "Concise feedback turns one game into clear training priorities."} />
+          <ValueCard icon={<Puzzle />} title={ru ? "Ð—Ð°Ð´Ð°Ñ‡Ð° Ð¸Ð· Ð¾ÑˆÐ¸Ð±ÐºÐ¸" : "Blunder puzzle"} body={ru ? "ÐšÐ»ÑŽÑ‡ÐµÐ²Ð°Ñ Ð¾ÑˆÐ¸Ð±ÐºÐ° ÑÑ‚Ð°Ð½Ð¾Ð²Ð¸Ñ‚ÑÑ ÐºÐ°Ñ€Ñ‚Ð¾Ñ‡ÐºÐ¾Ð¹ Ð´Ð»Ñ Ñ‚Ñ€ÐµÐ½Ð¸Ñ€Ð¾Ð²ÐºÐ¸." : "The biggest mistake becomes a revealable training card."} />
+          <ValueCard icon={<Share2 />} title={ru ? "Ð˜ÑÑ‚Ð¾Ñ€Ð¸Ñ Ð´Ð»Ñ ÑˆÐµÑ€Ð°" : "Shareable story"} body={ru ? "Ð—Ð°Ð³Ð¾Ð»Ð¾Ð²Ð¾Ðº Ð¸ Ñ€ÐµÐ·ÑŽÐ¼Ðµ Ð¿Ð¾Ð¼Ð¾Ð³Ð°ÑŽÑ‚ Ð±Ñ‹ÑÑ‚Ñ€Ð¾ Ñ€Ð°ÑÑÐºÐ°Ð·Ð°Ñ‚ÑŒ Ð¾ Ð¿Ñ€Ð¾Ð³Ñ€ÐµÑÑÐµ." : "A headline and coach summary make the review easy to share."} />
+          <ValueCard icon={<Trophy />} title={ru ? "Ð¡Ñ‚Ð°Ñ‚ÑƒÑ Ð² Ð³Ð¾Ñ€Ð¾Ð´Ðµ" : "City status"} body={ru ? "Ð‘ÐµÐ¹Ð´Ð¶ Founder Pro Ð²Ð¸Ð´ÐµÐ½ Ð² Ð¿Ñ€Ð¾Ñ„Ð¸Ð»Ðµ Ð¸ Ñ€ÐµÐ¹Ñ‚Ð¸Ð½Ð³Ðµ." : "Founder Pro badge travels into profile and leaderboard surfaces."} />
         </section>
 
         <section className="mt-10 rounded-[2rem] border border-white/10 bg-white/[0.04] p-6">
           <p className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.24em] text-[var(--gold)]">
-            <Users className="h-4 w-4" /> Demo checkout note
+            <Users className="h-4 w-4" /> {ru ? "Ð—Ð°Ð¼ÐµÑ‚ÐºÐ° Ð¾ Ð´ÐµÐ¼Ð¾" : "Demo checkout note"}
           </p>
           <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-300">
-            This demo intentionally avoids real payment collection. Stripe is not integrated; the button records founder upgrade intent and keeps Pro status with your profile.
+            {ru ? "Ð­Ñ‚Ð¾ Ð´ÐµÐ¼Ð¾ Ð½Ðµ ÑÐ¾Ð±Ð¸Ñ€Ð°ÐµÑ‚ Ñ€ÐµÐ°Ð»ÑŒÐ½Ñ‹Ðµ Ð¿Ð»Ð°Ñ‚ÐµÐ¶Ð¸. ÐšÐ½Ð¾Ð¿ÐºÐ° Ð°ÐºÑ‚Ð¸Ð²Ð¸Ñ€ÑƒÐµÑ‚ Founder Pro Ð¸ ÑÐ¾Ñ…Ñ€Ð°Ð½ÑÐµÑ‚ ÑÑ‚Ð°Ñ‚ÑƒÑ Ð² Ð¿Ñ€Ð¾Ñ„Ð¸Ð»Ðµ." : "This demo intentionally avoids real payment collection. The button records founder upgrade intent and keeps Pro status with your profile."}
           </p>
         </section>
       </main>
@@ -123,9 +128,10 @@ function Plan({ title, price, features }: { title: string; price: string; featur
 }
 
 function FounderBadge({ provider }: { provider: ProStatus["provider"] }) {
+  const { t } = useI18n();
   return (
     <span className="inline-flex items-center gap-2 rounded-full border border-[var(--gold)]/35 bg-[rgba(248,200,106,0.12)] px-4 py-2 text-sm font-semibold text-[var(--gold)]">
-      <Crown className="h-4 w-4" /> Founder Pro · {provider === "supabase" ? "Progress saved" : "This device"}
+      <Crown className="h-4 w-4" /> Founder Pro · {provider === "supabase" ? t("progressSaved") : t("thisDevice")}
     </span>
   );
 }

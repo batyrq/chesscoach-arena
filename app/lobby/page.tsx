@@ -130,7 +130,7 @@ function LobbyContent() {
       <main className="mx-auto grid min-h-[calc(100vh-96px)] w-full max-w-6xl items-center gap-8 px-5 pb-16 md:px-8 lg:grid-cols-[0.9fr_1.1fr]">
         <div>
           <p className="text-sm font-semibold uppercase tracking-[0.3em] text-[var(--mint)]">
-            {friendMode ? "Friend room" : "Arena lobby"}
+            {friendMode ? t("friendRoom") : t("chooseGame")}
           </p>
           <h1 className="mt-4 font-[var(--font-display)] text-4xl font-bold leading-tight tracking-[-0.03em]">
             {t("chooseGame")}
@@ -139,13 +139,13 @@ function LobbyContent() {
             {t("lobbySubtitle")}
           </p>
           <div className="mt-6 grid gap-3 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
-            <OnboardingProof icon={<MapPin className="h-4 w-4" />} label="City identity" value={city} />
-            <OnboardingProof icon={<Sparkles className="h-4 w-4" />} label="Coach loop" value="Instant review" />
-            <OnboardingProof icon={<Trophy className="h-4 w-4" />} label="Goal" value="Climb city rank" />
+            <OnboardingProof icon={<MapPin className="h-4 w-4" />} label={t("cityIdentity")} value={city} />
+            <OnboardingProof icon={<Sparkles className="h-4 w-4" />} label={t("coachLoop")} value={t("instantReview")} />
+            <OnboardingProof icon={<Trophy className="h-4 w-4" />} label={t("goal")} value={t("climbCityRank")} />
           </div>
           {proStatus.isPro ? (
             <p className="mt-5 inline-flex items-center gap-2 rounded-full border border-[var(--gold)]/35 bg-[rgba(248,200,106,0.1)] px-4 py-2 text-sm font-semibold text-[var(--gold)]">
-              <Crown className="h-4 w-4" /> Founder Pro active
+              <Crown className="h-4 w-4" /> {t("proActive")}
             </p>
           ) : null}
         </div>
@@ -164,9 +164,9 @@ function LobbyContent() {
             <div>
               <p className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-200"><Sparkles className="h-4 w-4 text-[var(--gold)]" /> {t("play")}</p>
               <div className="grid gap-3 md:grid-cols-3">
-                <PlayCard active={playKind === "friend"} icon={<Link2 className="h-4 w-4" />} title={t("friendRoom")} body="Invite a player and race the clock." onClick={() => setPlayKind("friend")} />
-                <PlayCard active={playKind === "bot"} icon={<Bot className="h-4 w-4" />} title={t("trainingBot")} body="Practice against a legal move bot." onClick={() => setPlayKind("bot")} />
-                <PlayCard active={playKind === "local"} icon={<MonitorPlay className="h-4 w-4" />} title={t("sameDevice")} body="Play both sides, then review." onClick={() => setPlayKind("local")} />
+                <PlayCard active={playKind === "friend"} icon={<Link2 className="h-4 w-4" />} title={t("friendRoom")} body={t("inviteRaceClock")} onClick={() => setPlayKind("friend")} />
+                <PlayCard active={playKind === "bot"} icon={<Bot className="h-4 w-4" />} title={t("trainingBot")} body={t("legalBotPractice")} onClick={() => setPlayKind("bot")} />
+                <PlayCard active={playKind === "local"} icon={<MonitorPlay className="h-4 w-4" />} title={t("sameDevice")} body={t("playBothSides")} onClick={() => setPlayKind("local")} />
               </div>
             </div>
             <div>
@@ -190,7 +190,7 @@ function LobbyContent() {
                 <label className="space-y-2">
                   <span className="text-sm font-semibold text-slate-200">{t("botLevel")}</span>
                   <Select value={botLevel} onChange={(event) => setBotLevel(event.target.value as BotLevel)}>
-                    {Object.entries(botProfiles).map(([key, bot]) => <option key={key} value={key}>{bot.label} · {bot.name}</option>)}
+                    {Object.entries(botProfiles).map(([key, bot]) => <option key={key} value={key}>{bot.label} Â· {bot.name}</option>)}
                   </Select>
                   <p className="text-xs text-slate-500">{botProfiles[botLevel].tagline}</p>
                 </label>
@@ -213,29 +213,29 @@ function LobbyContent() {
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <p className="flex items-center gap-2 text-sm font-semibold text-white">
-                    <Crown className="h-4 w-4 text-[var(--gold)]" /> {proStatus.isPro ? "Founder Pro ready" : "Pro demo upgrade"}
+                    <Crown className="h-4 w-4 text-[var(--gold)]" /> {proStatus.isPro ? t("founderProReady") : t("proDemoUpgrade")}
                   </p>
                   <p className="mt-1 text-sm leading-6 text-slate-300">
-                    {proStatus.isPro ? "Your deeper coach and puzzle features are framed as Pro-level demo value." : "Unlock the polished demo checkout, Pro badge, shareable coach summary, and blunder puzzles."}
+                    {proStatus.isPro ? t("proActive") : t("proSubtitle")}
                   </p>
                 </div>
                 <Button asChild variant="secondary" className="shrink-0">
-                  <Link href="/pro">{proStatus.isPro ? "View Pro" : "Upgrade demo"}</Link>
+                  <Link href="/pro">{proStatus.isPro ? t("viewPro") : t("upgradeDemo")}</Link>
                 </Button>
               </div>
             </div>
             <div className="rounded-[1.5rem] border border-white/10 bg-white/[0.04] p-4">
-              <p className="mb-3 text-sm font-semibold">Join Room by Code</p>
+              <p className="mb-3 text-sm font-semibold">{t("joinRoomByCode")}</p>
               <div className="flex flex-col gap-3 sm:flex-row">
                 <Input value={joinCode} onChange={(event) => setJoinCode(event.target.value)} placeholder="ARENA01" />
                 <Button onClick={() => void joinRoom()} variant="secondary" className="sm:w-36">
-                  Join
+                  {t("join")}
                 </Button>
               </div>
             </div>
             <div className="flex items-start gap-3 rounded-[1.5rem] bg-[rgba(118,247,203,0.08)] p-4 text-sm text-slate-300">
               <Bot className="mt-0.5 h-5 w-5 shrink-0 text-[var(--mint)]" />
-              Friend rooms create a shared game link, keep both boards in sync, and stay playable for guests.
+              {t("friendRoomsHelp")}
             </div>
           </div>
         </Card>
@@ -245,23 +245,24 @@ function LobbyContent() {
 }
 
 function CityRankPreview({ profile, city, mode }: { profile: PlayerProfile | null; city: City; mode: "supabase" | "local" }) {
+  const { t } = useI18n();
   return (
     <div className="rounded-[1.5rem] border border-[var(--mint)]/20 bg-[rgba(118,247,203,0.07)] p-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--mint)]">City Rank</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--mint)]">{t("cityRank")}</p>
           <p className="mt-2 font-[var(--font-display)] text-xl font-bold">
-            {profile ? `${profile.rating} rating · ${profile.coachScore} coach` : `Start at 1200 in ${city}`}
+            {profile ? `${profile.rating} · ${profile.coachScore}` : `1200 · ${city}`}
           </p>
           <p className="mt-1 text-sm text-slate-300">
-            You are ready to climb {city}. Every AI review updates your {mode === "supabase" ? "saved" : "guest"} rank.
+            {t("readyToClimb")} {city}. {t("everyReviewUpdates")}
           </p>
           <p className="mt-2 inline-flex rounded-full border border-white/10 bg-slate-950/40 px-3 py-1 text-xs font-semibold text-slate-300">
-            {mode === "supabase" ? "Rank saved" : "Guest profile"}
+            {mode === "supabase" ? t("rankSaved") : t("guestProfile")}
           </p>
         </div>
         <div className="rounded-2xl bg-slate-950/45 px-4 py-3 text-sm text-slate-300">
-          {profile ? `${profile.games} games · ${profile.reviews} reviews` : "No ranked games yet"}
+          {profile ? `${profile.games} · ${profile.reviews}` : t("noRankedGames")}
         </div>
       </div>
     </div>
