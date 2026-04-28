@@ -51,7 +51,7 @@ export default function AuthPage() {
 
     if (!supabase) {
       setConfigured(false);
-      setMessage("Supabase auth is not configured here. Continue in guest mode and your progress will stay local.");
+      setMessage("Accounts are not available here. Continue as a guest and your progress will stay on this device.");
       return;
     }
 
@@ -67,7 +67,7 @@ export default function AuthPage() {
         if (signUpError) throw signUpError;
 
         if (!data.session) {
-          setMessage("Account created. If email confirmation is enabled in Supabase, confirm your email or disable Confirm Email for demo mode.");
+          setMessage("Account created. If a confirmation step appears, ask the project owner to turn off email confirmation for demo mode.");
           return;
         }
 
@@ -153,7 +153,7 @@ export default function AuthPage() {
 
             {!configured ? (
               <div className="rounded-[1.25rem] border border-[var(--gold)]/25 bg-[rgba(248,200,106,0.08)] p-4 text-sm leading-6 text-slate-300">
-                Auth is not configured in this environment. Guest mode still works, including local games, reviews, Pro demo, and leaderboard fallback.
+                Accounts are not available in this session. Guest play still works, including games, reviews, Pro demo, and leaderboard progress on this device.
               </div>
             ) : null}
             {message ? <p className="rounded-[1.25rem] border border-[var(--mint)]/25 bg-[rgba(118,247,203,0.08)] p-4 text-sm leading-6 text-slate-200">{message}</p> : null}
@@ -163,7 +163,7 @@ export default function AuthPage() {
               {loading ? "Syncing..." : mode === "signup" ? "Create demo account" : "Sign in and sync"}
             </Button>
             <p className="text-xs leading-5 text-slate-500">
-              For the demo, signup starts immediately without email confirmation. If the dashboard still requires confirmation, turn Confirm Email off in the Supabase Email provider settings.
+              For the demo, signup starts immediately without email confirmation. If a confirmation step appears, ask the project owner to turn it off for demo mode.
             </p>
           </form>
         </Card>

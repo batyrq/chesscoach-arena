@@ -97,6 +97,6 @@ export function friendlyAuthError(message?: string) {
   if (text.includes("invalid login")) return "Email or password did not match.";
   if (text.includes("password")) return "Use a password with at least six characters.";
   if (text.includes("already registered") || text.includes("already exists")) return "That email already has an account. Try signing in.";
-  if (text.includes("rate")) return "Signup email is rate-limited right now. For demo mode, disable Confirm Email in Supabase or try again later.";
+  if (text.includes("rate")) return "Signup email is rate-limited right now. Try again later or ask the project owner to turn off email confirmation for demo mode.";
   return "Auth is unavailable right now. You can continue in guest mode.";
 }

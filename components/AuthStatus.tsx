@@ -55,7 +55,7 @@ export function AuthStatus() {
   if (!auth.configured) {
     return (
       <Button asChild href="/auth" variant="secondary" size="sm">
-        Guest mode
+        Guest profile
       </Button>
     );
   }

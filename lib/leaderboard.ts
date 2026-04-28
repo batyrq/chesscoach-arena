@@ -682,9 +682,9 @@ export function createLeaderboardAdapter(): LeaderboardAdapter {
 }
 
 export function getLeaderboardMode(mode?: AdapterMode) {
-  if (mode === "supabase") return "Live Supabase ranking";
-  if (mode === "local") return "Local demo rankings";
-  return getBrowserSupabaseClient() ? "Live Supabase ranking" : "Local demo rankings";
+  if (mode === "supabase") return "Rank saved";
+  if (mode === "local") return "Guest profile";
+  return getBrowserSupabaseClient() ? "Rank saved" : "Guest profile";
 }
 
 function readPlayers(): Record<string, PlayerProfile> {

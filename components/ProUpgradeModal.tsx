@@ -61,7 +61,7 @@ export function ProUpgradeModal({ triggerLabel = "Upgrade to Pro" }: { triggerLa
           <PlanCard
             title="Free"
             price="$0"
-            items={["Local and friend games", "Engine-lite review", "City leaderboard", "Local fallback mode"]}
+            items={["Practice and friend games", "Quick coach review", "City leaderboard", "Guest profile"]}
           />
           <div className="relative overflow-hidden rounded-[1.5rem] border border-[var(--gold)]/45 bg-[linear-gradient(145deg,rgba(248,200,106,0.18),rgba(118,247,203,0.08))] p-5">
             <div className="absolute right-4 top-4 rounded-full bg-[var(--gold)] px-3 py-1 text-xs font-bold text-slate-950">
@@ -80,7 +80,7 @@ export function ProUpgradeModal({ triggerLabel = "Upgrade to Pro" }: { triggerLa
           </div>
         </div>
         <div className="mt-4 rounded-[1.25rem] border border-white/10 bg-white/[0.04] p-4 text-sm leading-6 text-slate-300">
-          Demo checkout — no real payment will be charged. The upgrade saves a Founder Pro status locally and in Supabase when available.
+          Demo checkout — no real payment will be charged. The upgrade saves a Founder Pro status with your profile.
         </div>
         {status.isPro ? (
           <div className="mt-4 rounded-[1.25rem] border border-[var(--mint)]/30 bg-[rgba(118,247,203,0.1)] p-4 text-sm text-slate-200">
@@ -88,7 +88,7 @@ export function ProUpgradeModal({ triggerLabel = "Upgrade to Pro" }: { triggerLa
               <BadgeCheck className="h-4 w-4 text-[var(--mint)]" /> Founder Pro active
             </p>
             <p className="mt-1 text-slate-300">
-              Status persisted through {status.provider === "supabase" ? "Supabase and local fallback" : "local demo fallback"}.
+              {status.provider === "supabase" ? "Progress saved with your profile." : "Progress saved on this device."}
             </p>
           </div>
         ) : null}

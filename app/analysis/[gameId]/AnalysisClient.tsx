@@ -145,7 +145,7 @@ export function AnalysisClient({ gameId }: { gameId: string }) {
       saveEnhancedCoachReview(gameId, payload.review);
       startTransition(() => setEnhancedReview(payload.review ?? null));
     } catch {
-      setEnhancedError("The deeper coach review is using the reliable fallback path.");
+      setEnhancedError("The deeper coach review is using the quick coach review for now.");
     } finally {
       setEnhancedLoading(false);
     }
@@ -191,7 +191,7 @@ export function AnalysisClient({ gameId }: { gameId: string }) {
             <p className="text-sm font-semibold uppercase tracking-[0.3em] text-[var(--mint)]">Game review</p>
             <h1 className="mt-2 font-[var(--font-display)] text-4xl font-black tracking-[-0.04em]">Coach room</h1>
             <p className="mt-2 max-w-xl text-sm leading-6 text-slate-400">
-              Engine-lite review replaying {review?.moves.length ?? 0} plies from this exact game. Stockfish-depth lines are ready for the Pro adapter.
+              Coach review replaying {formatPlyCount(review?.moves.length ?? 0)} from this exact game. Generate a deeper note when you want extra training ideas.
             </p>
           </div>
           {review ? <ChessBoardPanel fen={review.fen} locked /> : <BoardSkeleton />}
@@ -285,11 +285,11 @@ function EnhancedCoachPanel({
             <p className="text-sm font-semibold uppercase tracking-[0.25em] text-[var(--gold)]">Deeper AI Coach</p>
             <h2 className="mt-2 font-[var(--font-display)] text-2xl font-bold">Blunder-to-puzzle review</h2>
             <p className="mt-2 max-w-xl text-sm leading-6 text-slate-300">
-              Generate a richer coach note from the engine-lite facts, then save the puzzle with this review.
+              Generate a richer coach note from the game facts, then save the puzzle with this review.
             </p>
           </div>
           <span className="w-fit rounded-full border border-white/10 bg-slate-950/50 px-3 py-1 text-xs font-semibold text-slate-200">
-            {review?.provider === "gemini" ? "Gemini AI Coach" : "Engine-lite fallback"}
+            {review?.provider === "gemini" ? "Gemini AI Coach" : "Quick Coach Review"}
           </span>
         </div>
 
@@ -357,7 +357,7 @@ function EnhancedCoachPanel({
           </div>
         ) : (
           <div className="mt-5 rounded-[1.25rem] border border-white/10 bg-white/[0.04] p-4 text-sm leading-6 text-slate-300">
-            Engine-lite has already produced the baseline review. Generate the deeper version to create a saved coach note and puzzle.
+            Your baseline review is ready. Generate the deeper version to create a saved coach note and puzzle.
           </div>
         )}
       </div>
@@ -394,7 +394,7 @@ function RankingUpdateCard({ update }: { update: LeaderboardUpdateResult }) {
             </p>
             <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold text-slate-300">
               <span className="rounded-full border border-white/10 bg-slate-950/45 px-3 py-1">
-                {update.adapterMode === "supabase" ? "Live Supabase" : "Local demo"}
+                {update.adapterMode === "supabase" ? "Rank saved" : "Guest profile"}
               </span>
               <span className="rounded-full border border-white/10 bg-slate-950/45 px-3 py-1">
                 Rank {formatRank(update.oldRank)} to {formatRank(update.newRank)}
@@ -513,6 +513,12 @@ function formatDelta(value: number) {
 
 function formatRank(rank: number | null) {
   return rank ? `#${rank}` : "unranked";
+}
+
+function formatPlyCount(count: number) {
+  if (count === 0) return "0 moves";
+  if (count === 1) return "1 ply";
+  return `${count} plies`;
 }
 
 function loadEnhancedCoachReview(gameId: string) {

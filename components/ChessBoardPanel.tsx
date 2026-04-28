@@ -45,7 +45,14 @@ export function ChessBoardPanel({ fen, onDrop, locked }: ChessBoardPanelProps) {
   return (
     <div className="relative mx-auto w-full max-w-[min(86vw,620px)] rounded-[2rem] border border-white/10 bg-slate-950/60 p-3 shadow-[0_35px_100px_rgba(0,0,0,0.45)]">
       <div className="absolute -inset-4 -z-10 rounded-[2.5rem] bg-[radial-gradient(circle,rgba(118,247,203,0.18),transparent_62%)] blur-2xl" />
-      <div className="grid aspect-square overflow-hidden rounded-[1.35rem] border border-white/10 bg-slate-950">
+      <div
+        data-testid="chess-board"
+        className="grid aspect-square grid-cols-8 grid-rows-8 overflow-hidden rounded-[1.35rem] border border-white/10 bg-slate-950"
+        style={{
+          gridTemplateColumns: "repeat(8, minmax(0, 1fr))",
+          gridTemplateRows: "repeat(8, minmax(0, 1fr))"
+        }}
+      >
         {board.map((row, rowIndex) => row.map((piece, colIndex) => {
           const square = `${files[colIndex]}${ranks[rowIndex]}`;
           const light = (rowIndex + colIndex) % 2 === 0;
@@ -55,6 +62,8 @@ export function ChessBoardPanel({ fen, onDrop, locked }: ChessBoardPanelProps) {
             <button
               key={square}
               type="button"
+              data-testid="chess-square"
+              data-square={square}
               disabled={locked}
               onClick={() => handleSquareClick(square, piece)}
               className={`relative flex items-center justify-center text-[clamp(1.9rem,7vw,4.1rem)] leading-none transition duration-150 ${light ? "bg-[#d7c49e] text-slate-950" : "bg-[#315065] text-white"} ${selected ? "ring-4 ring-inset ring-[var(--mint)]" : ""} ${locked ? "cursor-default" : "hover:brightness-110 active:scale-[0.98]"}`}
@@ -75,20 +84,26 @@ export function ChessBoardPanel({ fen, onDrop, locked }: ChessBoardPanelProps) {
 
 function parseFenBoard(fen: string) {
   const placement = fen.split(" ")[0] ?? "8/8/8/8/8/8/8/8";
-  return placement.split("/").map((rank) => {
+  const rows = placement.split("/").slice(0, 8).map((rank) => {
     const row: Array<string | null> = [];
 
     for (const char of rank) {
-      const emptySquares = Number(char);
-      if (Number.isInteger(emptySquares)) {
+      if (/^[1-8]$/.test(char)) {
+        const emptySquares = Number(char);
         row.push(...Array.from<string | null>({ length: emptySquares }).fill(null));
       } else {
         row.push(char);
       }
     }
 
-    return row.slice(0, 8);
+    return [...row, ...Array.from<string | null>({ length: 8 }).fill(null)].slice(0, 8);
   });
+
+  while (rows.length < 8) {
+    rows.push(Array.from<string | null>({ length: 8 }).fill(null));
+  }
+
+  return rows;
 }
 
 function pieceName(piece: string) {

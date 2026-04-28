@@ -43,7 +43,7 @@ export default function ProPage() {
             <div className="mt-6 flex flex-wrap gap-3">
               {status.isPro ? <FounderBadge provider={status.provider} /> : null}
               <span className="rounded-full border border-white/10 bg-white/[0.05] px-4 py-2 text-sm text-slate-300">No real payment</span>
-              <span className="rounded-full border border-white/10 bg-white/[0.05] px-4 py-2 text-sm text-slate-300">Supabase + local fallback</span>
+              <span className="rounded-full border border-white/10 bg-white/[0.05] px-4 py-2 text-sm text-slate-300">Progress saved</span>
             </div>
           </div>
           <Card className="overflow-hidden p-0">
@@ -77,7 +77,7 @@ export default function ProPage() {
                   <BadgeCheck className="h-4 w-4" /> Founder Pro active
                 </p>
                 <h2 className="mt-2 font-[var(--font-display)] text-3xl font-bold">Your profile is ready for the Pro demo track.</h2>
-                <p className="mt-2 text-sm text-slate-300">Status persists after refresh and syncs to Supabase when configured.</p>
+                <p className="mt-2 text-sm text-slate-300">Status persists after refresh and stays with your profile.</p>
               </div>
               <Button asChild>
                 <Link href="/leaderboard">View badge on leaderboard <ArrowRight className="h-4 w-4" /></Link>
@@ -98,7 +98,7 @@ export default function ProPage() {
             <Users className="h-4 w-4" /> Demo checkout note
           </p>
           <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-300">
-            This phase intentionally avoids real payment collection. Stripe is not integrated; the button records founder upgrade intent, persists a Pro status, and keeps the app fully usable when Supabase is unavailable.
+            This demo intentionally avoids real payment collection. Stripe is not integrated; the button records founder upgrade intent and keeps Pro status with your profile.
           </p>
         </section>
       </main>
@@ -123,7 +123,7 @@ function Plan({ title, price, features }: { title: string; price: string; featur
 function FounderBadge({ provider }: { provider: ProStatus["provider"] }) {
   return (
     <span className="inline-flex items-center gap-2 rounded-full border border-[var(--gold)]/35 bg-[rgba(248,200,106,0.12)] px-4 py-2 text-sm font-semibold text-[var(--gold)]">
-      <Crown className="h-4 w-4" /> Founder Pro · {provider === "supabase" ? "Supabase saved" : "Local saved"}
+      <Crown className="h-4 w-4" /> Founder Pro · {provider === "supabase" ? "Progress saved" : "This device"}
     </span>
   );
 }

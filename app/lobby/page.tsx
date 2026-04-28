@@ -119,7 +119,7 @@ function LobbyContent() {
             Choose your city. Bring your prep.
           </h1>
           <p className="mt-5 text-lg leading-8 text-slate-300">
-            Set your arena identity once, then jump into a legal chess game, invite a friend, or run the fastest judge-friendly local demo.
+            Set your arena identity once, then jump into a legal chess game, invite a friend, or run a fast practice match.
           </p>
           <div className="mt-6 grid gap-3 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
             <OnboardingProof icon={<MapPin className="h-4 w-4" />} label="City identity" value={city} />
@@ -149,7 +149,7 @@ function LobbyContent() {
                 <Link2 className="h-4 w-4" /> Create Friend Room
               </Button>
               <Button onClick={() => void createRoom("LOCAL")} variant="secondary" size="lg">
-                <MonitorPlay className="h-4 w-4" /> Play Local Demo
+                <MonitorPlay className="h-4 w-4" /> Play Practice Game
               </Button>
             </div>
             <div className="grid gap-3 text-sm text-slate-300 sm:grid-cols-2">
@@ -157,7 +157,7 @@ function LobbyContent() {
                 Friend rooms create a shareable invite link and a polished waiting state.
               </div>
               <div className="rounded-[1.25rem] border border-[var(--mint)]/20 bg-[rgba(118,247,203,0.08)] p-4">
-                Local demo is the fastest path: play both sides, then analyze.
+                Practice game is the fastest path: play both sides, then analyze.
               </div>
             </div>
             <CityRankPreview profile={playerProfile} city={city} mode={leaderboardMode} />
@@ -187,7 +187,7 @@ function LobbyContent() {
             </div>
             <div className="flex items-start gap-3 rounded-[1.5rem] bg-[rgba(118,247,203,0.08)] p-4 text-sm text-slate-300">
               <Bot className="mt-0.5 h-5 w-5 shrink-0 text-[var(--mint)]" />
-              Multiplayer note: friend rooms use Supabase Realtime when configured and fall back to the local demo channel when needed.
+              Friend rooms create a shared game link, keep both boards in sync, and stay playable for guests.
             </div>
           </div>
         </Card>
@@ -206,10 +206,10 @@ function CityRankPreview({ profile, city, mode }: { profile: PlayerProfile | nul
             {profile ? `${profile.rating} rating · ${profile.coachScore} coach` : `Start at 1200 in ${city}`}
           </p>
           <p className="mt-1 text-sm text-slate-300">
-            You are ready to climb {city}. Every AI review updates your {mode === "supabase" ? "live Supabase" : "local demo"} rank.
+            You are ready to climb {city}. Every AI review updates your {mode === "supabase" ? "saved" : "guest"} rank.
           </p>
           <p className="mt-2 inline-flex rounded-full border border-white/10 bg-slate-950/40 px-3 py-1 text-xs font-semibold text-slate-300">
-            {mode === "supabase" ? "Live Supabase ranking" : "Local demo ranking"}
+            {mode === "supabase" ? "Rank saved" : "Guest profile"}
           </p>
         </div>
         <div className="rounded-2xl bg-slate-950/45 px-4 py-3 text-sm text-slate-300">

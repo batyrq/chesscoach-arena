@@ -200,7 +200,7 @@ export function GameClient({ roomId }: { roomId: string }) {
   const intense = game.inCheck() || game.isCheckmate() || whiteClock === 0 || blackClock === 0;
   const turnPlayer = game.turn() === "w" ? players[0] : players[1];
   const canMove = isLocalGame || canCurrentTabMove(roomState, roomRole, game.turn());
-  const roleLabel = isLocalGame ? "Local demo" : roomRole === "spectator" ? "Spectator mode" : `You are ${roomRole === "white" ? "White" : "Black"}`;
+  const roleLabel = isLocalGame ? "Practice game" : roomRole === "spectator" ? "Spectator mode" : `You are ${roomRole === "white" ? "White" : "Black"}`;
 
   return (
     <AppShell>
@@ -212,7 +212,7 @@ export function GameClient({ roomId }: { roomId: string }) {
               <h1 className="mt-2 font-[var(--font-display)] text-4xl font-black tracking-[-0.04em]">Training match</h1>
               <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold text-slate-300">
                 <span className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-1">{roleLabel}</span>
-                {!isLocalGame ? <span className="rounded-full border border-[var(--mint)]/20 bg-[rgba(118,247,203,0.08)] px-3 py-1">{realtimeMode === "supabase" ? "Supabase realtime" : "Local realtime demo mode"}</span> : null}
+                {!isLocalGame ? <span className="rounded-full border border-[var(--mint)]/20 bg-[rgba(118,247,203,0.08)] px-3 py-1">{realtimeMode === "supabase" ? "Synced game" : "Guest room"}</span> : null}
                 {!isLocalGame ? <span className="rounded-full border border-white/10 bg-white/[0.06] px-3 py-1">v{roomState?.version ?? 0}</span> : null}
               </div>
             </div>
@@ -233,7 +233,7 @@ export function GameClient({ roomId }: { roomId: string }) {
           <Card className="p-5">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="font-[var(--font-display)] text-xl font-bold">Move list</h2>
-              <span className="rounded-full bg-white/10 px-3 py-1 text-xs text-slate-300">{moves.length} plies</span>
+              <span className="rounded-full bg-white/10 px-3 py-1 text-xs text-slate-300">{formatPlyCount(moves.length)}</span>
             </div>
             <MoveHistory moves={moves} />
             <GameStats moves={moves} />
@@ -251,7 +251,7 @@ export function GameClient({ roomId }: { roomId: string }) {
           </Card>
           <PlayerCard player={players[0]} active={game.turn() === "w" && !ended} clockSeconds={whiteClock} statusLabel={getPlayerStatus(roomState, "white", isLocalGame)} />
           <Link href="/leaderboard" className="block rounded-[1.5rem] border border-white/10 bg-white/[0.05] p-4 text-sm text-slate-300 transition hover:bg-white/[0.09]">
-            After the review, your city result belongs on the leaderboard. Demo mode shows seeded rankings until Supabase is connected.
+            Review your game to appear on the city leaderboard. Sign in to keep progress across devices.
           </Link>
         </aside>
       </main>
@@ -265,6 +265,12 @@ function getReviewResult(game: Chess) {
   return "*" as const;
 }
 
+function formatPlyCount(count: number) {
+  if (count === 0) return "0 moves";
+  if (count === 1) return "1 ply";
+  return `${count} plies`;
+}
+
 function ArenaHud({ white, black, turnName, moves, roomId, onCoachStarter, canUseStarter, roleLabel }: { white: Player; black: Player; turnName: string; moves: number; roomId: string; onCoachStarter: () => void; canUseStarter: boolean; roleLabel: string }) {
   const friendRoom = !isLocalRoom(roomId);
 
@@ -276,7 +282,7 @@ function ArenaHud({ white, black, turnName, moves, roomId, onCoachStarter, canUs
         <p className="mt-1 text-sm font-semibold text-white">
           {moves === 0 ? "Drag a white piece to start" : `${turnName} to move`}
         </p>
-        <p className="mt-1 text-xs text-[var(--gold)]">{friendRoom ? "Invite link room" : roleLabel}</p>
+        <p className="mt-1 text-xs text-[var(--gold)]">{friendRoom ? "Friend room" : roleLabel}</p>
         {moves < 6 && canUseStarter ? (
           <button
             type="button"
